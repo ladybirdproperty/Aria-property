@@ -10,412 +10,568 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.svg">
 <title>ARIA — Property Intelligence</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --gold: #c9a84c;
-    --gold-dim: #8a6f2e;
-    --bg: #080808;
-    --surface: #101010;
-    --surface2: #161616;
-    --border: #1e1e1e;
-    --border2: #2a2a2a;
-    --text: #e8e0d0;
-    --text-dim: #888;
-    --text-muted: #444;
-    --green: #3d9e6e;
-    --red: #9e3d3d;
-    --amber: #c9a84c;
-    --radius: 8px;
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
+:root {
+  --gold: #c9a84c;
+  --gold-dim: #8a6f2e;
+  --gold-bg: rgba(201,168,76,0.12);
+  --bg: #080808;
+  --surface: #111;
+  --surface2: #181818;
+  --border: #1e1e1e;
+  --border2: #2c2c2c;
+  --text: #f0e8d8;
+  --text-dim: #aaa;
+  --text-muted: #666;
+  --green: #3d9e6e;
+  --red: #c0504d;
+  --radius: 10px;
+  --header-h: 70px;
+  --stage-h: 48px;
+  --nav-h: 72px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --touch: 48px;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
-    overscroll-behavior: none;
-  }
+html { height: -webkit-fill-available; }
 
-  /* SPLASH */
-  #splash {
-    position: fixed; inset: 0; background: var(--bg); z-index: 999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transition: opacity 0.5s; gap: 16px;
-  }
-  #splash.hidden { opacity: 0; pointer-events: none; }
-  .splash-logo { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; color: var(--gold); letter-spacing: 12px; }
-  .splash-sub { font-size: 9px; letter-spacing: 4px; color: var(--text-muted); text-transform: uppercase; }
-  .splash-tagline { font-size: 10px; color: var(--text-muted); letter-spacing: 2px; margin-top: 8px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* HEADER */
-  #header {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(8,8,8,0.95); backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 16px 10px;
-    padding-top: max(12px, env(safe-area-inset-top));
-  }
-  .header-inner { display: flex; align-items: center; justify-content: space-between; }
-  .logo-mark { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; color: var(--gold); letter-spacing: 8px; }
-  .logo-sub { font-size: 13px; letter-spacing: 2.5px; color: #d4c9b0; text-transform: uppercase; margin-top: 4px; font-weight: 400; }
-  .header-actions { display: flex; gap: 12px; align-items: center; }
-  .icon-btn {
-    width: 48px; height: 48px; border-radius: 10px; border: 1px solid var(--border2);
-    background: var(--surface); color: #e8e0d0; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; font-size: 22px;
-    transition: all 0.2s;
-  }
-  .icon-btn:active { transform: scale(0.95); background: var(--surface2); }
-  .api-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+/* ── SPLASH ────────────────────────────────────── */
+#splash {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  transition: opacity 0.6s ease;
+}
+#splash.out { opacity: 0; pointer-events: none; }
+.splash-logo { font-family: 'Cormorant Garamond', serif; font-size: clamp(48px, 12vw, 72px); font-weight: 300; color: var(--gold); letter-spacing: 10px; }
+.splash-sub { font-size: clamp(9px, 2vw, 12px); letter-spacing: 4px; color: var(--text-muted); text-transform: uppercase; }
+.splash-tag { font-size: clamp(10px, 2.2vw, 13px); color: #555; letter-spacing: 2px; font-style: italic; font-family: 'Cormorant Garamond', serif; }
 
-  /* STAGE PILLS */
-  #stage-bar {
-    position: fixed; top: 80px; left: 0; right: 0; z-index: 99;
-    background: rgba(8,8,8,0.9); backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
-    padding: 8px 16px; overflow-x: auto; display: flex; gap: 6px;
-    scrollbar-width: none;
-  }
-  #stage-bar::-webkit-scrollbar { display: none; }
-  .stage-pill {
-    flex-shrink: 0; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
-    padding: 7px 14px; border-radius: 20px; border: 1px solid var(--border2);
-    background: transparent; color: #888; cursor: pointer; transition: all 0.2s;
-    min-height: 34px;
-  }
-  .stage-pill.active { background: rgba(201,168,76,0.15); border-color: var(--gold); color: var(--gold); }
+/* ── HEADER ────────────────────────────────────── */
+#hdr {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(8,8,8,0.96); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--safe-top) + 10px) 16px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: calc(var(--header-h) + var(--safe-top));
+}
+.logo-wrap { display: flex; flex-direction: column; }
+.logo-name { font-family: 'Cormorant Garamond', serif; font-size: clamp(28px, 6vw, 38px); font-weight: 400; color: var(--gold); letter-spacing: 7px; line-height: 1; }
+.logo-tag { font-size: clamp(9px, 2vw, 12px); letter-spacing: 2.5px; color: #c8bfa8; text-transform: uppercase; margin-top: 3px; }
+.hdr-btns { display: flex; gap: 8px; }
+.hdr-btn {
+  width: var(--touch); height: var(--touch);
+  background: var(--surface); border: 1px solid var(--border2); border-radius: 10px;
+  color: var(--text-dim); font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+.hdr-btn:active { transform: scale(0.93); background: var(--surface2); }
+.api-dot { width: 8px; height: 8px; border-radius: 50%; background: #444; transition: background 0.3s; }
 
-  /* NAV */
-  #nav {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(8,8,8,0.97); backdrop-filter: blur(20px);
-    border-top: 1px solid var(--border);
-    display: flex;
-    padding-bottom: max(var(--safe-bottom), 8px);
-  }
-  .nav-item {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    padding: 12px 4px 8px; cursor: pointer; transition: all 0.2s; border: none; background: transparent;
-    min-height: 64px;
-  }
-  .nav-icon { font-size: 28px; line-height: 1; }
-  .nav-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-top: 5px; color: var(--text-dim); transition: color 0.2s; font-weight: 500; }
-  .nav-item.active .nav-label { color: var(--gold); }
-  .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px rgba(201,168,76,0.5)); }
+/* ── STAGE BAR ─────────────────────────────────── */
+#stages {
+  position: fixed; z-index: 190;
+  left: 0; right: 0;
+  top: calc(var(--header-h) + var(--safe-top));
+  background: rgba(8,8,8,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  height: var(--stage-h);
+  display: flex; align-items: center;
+  padding: 0 12px; gap: 6px;
+  overflow-x: auto; scrollbar-width: none;
+}
+#stages::-webkit-scrollbar { display: none; }
+.s-pill {
+  flex-shrink: 0; height: 32px;
+  font-size: clamp(9px, 2vw, 11px); letter-spacing: 1px; text-transform: uppercase;
+  padding: 0 12px; border-radius: 16px;
+  border: 1px solid var(--border2); background: transparent; color: var(--text-muted);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.s-pill.on { background: var(--gold-bg); border-color: var(--gold); color: var(--gold); }
 
-  /* CONTENT */
-  #content {
-    padding-top: 130px;
-    padding-bottom: calc(90px + max(var(--safe-bottom), 8px));
-    padding-left: 16px; padding-right: 16px;
-    max-width: 600px; margin: 0 auto;
-  }
+/* ── BOTTOM NAV ────────────────────────────────── */
+#nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(8,8,8,0.97); backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: max(var(--safe-bottom), 6px);
+  height: calc(var(--nav-h) + max(var(--safe-bottom), 6px));
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; background: transparent; border: none; cursor: pointer;
+  padding: 8px 2px; min-width: 0; transition: opacity 0.2s;
+}
+.nav-btn:active { opacity: 0.7; }
+.nav-ico { font-size: clamp(22px, 5vw, 28px); line-height: 1; }
+.nav-lbl { font-size: clamp(9px, 2vw, 11px); letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+.nav-btn.on .nav-lbl { color: var(--gold); }
+.nav-btn.on .nav-ico { filter: drop-shadow(0 0 8px rgba(201,168,76,0.6)); }
 
-  /* SECTION HEADER */
-  .section-header { margin-bottom: 20px; }
-  .section-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 400; color: var(--text); letter-spacing: 2px; }
-  .section-desc { font-size: 11px; letter-spacing: 2px; color: #aaa; text-transform: uppercase; margin-top: 4px; }
+/* ── SCROLL CONTENT ────────────────────────────── */
+#content {
+  padding-top: calc(var(--header-h) + var(--stage-h) + var(--safe-top) + 16px);
+  padding-bottom: calc(var(--nav-h) + max(var(--safe-bottom), 6px) + 20px);
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  max-width: 680px; margin: 0 auto;
+}
 
-  /* CARDS */
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
-  }
-  .card-title { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+/* ── PAGE SECTIONS ─────────────────────────────── */
+.page { display: none; animation: fadeUp 0.25s ease; }
+.page.on { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
-  /* FORM */
-  .field { margin-bottom: 14px; }
-  .field:last-child { margin-bottom: 0; }
-  label { display: block; font-size: 11px; letter-spacing: 1.5px; color: #c8bfa8; text-transform: uppercase; margin-bottom: 8px; font-weight: 500; }
-  input, select, textarea {
-    width: 100%; background: var(--bg); border: 1px solid var(--border2);
-    border-radius: 6px; padding: 14px; color: #f0e8d8; font-size: 16px;
-    font-family: 'DM Mono', monospace; outline: none; transition: border-color 0.2s;
-    -webkit-appearance: none; appearance: none;
-  }
-  input:focus, select:focus, textarea:focus { border-color: var(--gold-dim); }
-  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
-  textarea { resize: none; min-height: 80px; line-height: 1.6; }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.pg-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(26px, 6vw, 36px); font-weight: 400; letter-spacing: 2px; margin-bottom: 4px; }
+.pg-desc { font-size: clamp(9px, 2vw, 11px); letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 20px; }
 
-  /* STATS BAR */
-  .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
-  .stat-cell { background: var(--surface); padding: 12px 8px; text-align: center; }
-  .stat-val { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: var(--gold); display: block; }
-  .stat-val.green { color: var(--green); }
-  .stat-val.red { color: var(--red); }
-  .stat-lab { font-size: 10px; letter-spacing: 1.5px; color: #999; text-transform: uppercase; margin-top: 2px; display: block; }
+/* ── CARDS ─────────────────────────────────────── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+.card-hd { font-size: clamp(9px, 2vw, 11px); letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 
-  /* WORKS TABLE */
-  .works-header { display: grid; grid-template-columns: 1fr 52px 70px 70px; gap: 6px; padding: 6px 0 8px; border-bottom: 1px solid var(--border2); margin-bottom: 4px; }
-  .works-header span { font-size: 7px; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
-  .works-header span:not(:first-child) { text-align: right; }
-  .work-row { display: grid; grid-template-columns: 1fr 52px 70px 70px; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(30,30,30,0.5); }
-  .work-name { font-size: 11px; color: var(--text-dim); line-height: 1.3; }
-  .work-input { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 5px 6px; color: var(--text); font-size: 12px; font-family: 'DM Mono', monospace; text-align: right; width: 100%; -webkit-appearance: none; }
-  .work-total { font-size: 12px; color: var(--gold); text-align: right; }
-  .work-total.zero { color: var(--text-muted); }
+/* ── FORM FIELDS ───────────────────────────────── */
+.field { margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+@media (max-width: 360px) { .field-row { grid-template-columns: 1fr; } .field-row-3 { grid-template-columns: 1fr 1fr; } }
 
-  /* PHOTOS */
-  .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-  .photo-thumb { aspect-ratio: 1; border-radius: 6px; overflow: hidden; position: relative; background: var(--bg); border: 1px solid var(--border2); }
-  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .photo-thumb .del-photo { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); border-radius: 50%; border: none; color: #fff; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
-  .photo-add { aspect-ratio: 1; border-radius: 6px; border: 1px dashed var(--border2); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 4px; background: transparent; }
-  .photo-add span { font-size: 22px; }
-  .photo-add small { font-size: 8px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
-  .photo-label-input { font-size: 9px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text-dim); padding: 2px 0; width: 100%; margin-top: 4px; font-family: 'DM Mono', monospace; }
+label {
+  display: block; font-size: clamp(10px, 2.2vw, 12px);
+  letter-spacing: 1.5px; color: #c0b090; text-transform: uppercase;
+  margin-bottom: 8px; font-weight: 500;
+}
 
-  /* BUTTONS */
-  .btn-gold {
-    width: 100%; background: var(--gold); color: #0a0a0a; border: none;
-    border-radius: var(--radius); padding: 15px; font-size: 10px; letter-spacing: 3px;
-    text-transform: uppercase; cursor: pointer; font-family: 'DM Mono', monospace;
-    font-weight: 500; transition: all 0.2s; margin-top: 8px;
-  }
-  .btn-gold:active { transform: scale(0.98); opacity: 0.9; }
-  .btn-ghost {
-    width: 100%; background: transparent; color: var(--text-muted); border: 1px solid var(--border2);
-    border-radius: var(--radius); padding: 13px; font-size: 9px; letter-spacing: 2px;
-    text-transform: uppercase; cursor: pointer; font-family: 'DM Mono', monospace; margin-top: 8px;
-  }
+input[type=text], input[type=number], input[type=password], input[type=email], select {
+  width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 14px 14px; color: var(--text); font-size: clamp(15px, 3.5vw, 17px);
+  font-family: 'DM Mono', monospace; outline: none; transition: border-color 0.2s;
+  -webkit-appearance: none; appearance: none; min-height: var(--touch);
+}
+input:focus, select:focus { border-color: var(--gold-dim); }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px;
+}
 
-  /* DEALS LIST */
-  .deal-item { padding: 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center; }
-  .deal-item:active { background: var(--surface2); }
-  .deal-item:last-child { border-bottom: none; }
-  .deal-addr { font-size: 13px; color: var(--text); margin-bottom: 4px; }
-  .deal-meta { font-size: 9px; color: var(--text-muted); letter-spacing: 1px; }
-  .deal-del { background: transparent; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 4px 8px; }
-  .empty-state { text-align: center; padding: 48px 20px; }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
-  .empty-text { font-size: 10px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+/* ── VOICE TEXTAREA ────────────────────────────── */
+.voice-wrap { position: relative; }
+.voice-wrap textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 14px 52px 14px 14px; color: var(--text); font-size: clamp(15px, 3.5vw, 17px);
+  font-family: 'DM Mono', monospace; outline: none; transition: border-color 0.2s;
+  resize: none; min-height: 100px; line-height: 1.6; -webkit-appearance: none;
+}
+.voice-wrap textarea:focus { border-color: var(--gold-dim); }
+.mic-btn {
+  position: absolute; top: 10px; right: 10px;
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text-dim); font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.mic-btn.listening { background: rgba(201,168,76,0.2); border-color: var(--gold); color: var(--gold); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+.mic-hint { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; margin-top: 4px; }
 
-  /* ANALYSIS */
-  .analysis-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
-  .analysis-section-title { font-size: 9px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin: 16px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-  .analysis-section-title:first-child { margin-top: 0; }
-  .analysis-text { font-size: 13px; color: #bbb; line-height: 1.7; margin: 4px 0; }
-  .analysis-bullet { font-size: 12px; color: #aaa; line-height: 1.6; margin: 3px 0; padding-left: 12px; border-left: 2px solid var(--border2); }
-  .analysis-numbered { font-size: 12px; color: #ccc; line-height: 1.6; margin: 3px 0; }
-  .verdict-go { color: var(--green); font-size: 16px; font-weight: 500; }
-  .verdict-cond { color: var(--amber); font-size: 16px; font-weight: 500; }
-  .verdict-no { color: var(--red); font-size: 16px; font-weight: 500; }
+/* ── STATS BAR ─────────────────────────────────── */
+.stats { display: grid; gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
+.stats.s3 { grid-template-columns: repeat(3, 1fr); }
+.stats.s2 { grid-template-columns: repeat(2, 1fr); }
+.stat { background: var(--surface); padding: 14px 8px; text-align: center; }
+.stat-v { font-family: 'Cormorant Garamond', serif; font-size: clamp(18px, 4.5vw, 24px); font-weight: 600; color: var(--gold); display: block; }
+.stat-v.g { color: var(--green); }
+.stat-v.r { color: var(--red); }
+.stat-l { font-size: clamp(8px, 1.8vw, 10px); letter-spacing: 1.5px; color: #888; text-transform: uppercase; margin-top: 3px; display: block; }
 
-  .loading-ring { width: 40px; height: 40px; border: 2px solid var(--border2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ── WORKS TABLE ───────────────────────────────── */
+.wk-hd { display: grid; grid-template-columns: 1fr 50px 72px 68px; gap: 6px; padding: 6px 0 8px; border-bottom: 1px solid var(--border2); }
+.wk-hd span { font-size: 9px; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+.wk-hd span:not(:first-child) { text-align: right; }
+.wk-row { display: grid; grid-template-columns: 1fr 50px 72px 68px; gap: 6px; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(30,30,30,0.6); }
+.wk-name { font-size: clamp(11px, 2.5vw, 13px); color: var(--text-dim); line-height: 1.3; }
+.wk-in { background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 6px 8px; color: var(--text); font-size: 13px; font-family: 'DM Mono', monospace; text-align: right; width: 100%; -webkit-appearance: none; min-height: 36px; }
+.wk-tot { font-size: 13px; color: var(--gold); text-align: right; }
+.wk-tot.z { color: var(--text-muted); }
 
-  /* API MODAL */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: flex; align-items: flex-end; backdrop-filter: blur(4px); }
-  .modal-overlay.hidden { display: none; }
-  .modal-sheet { background: var(--surface); border-radius: 16px 16px 0 0; border-top: 1px solid var(--border2); padding: 20px; width: 100%; padding-bottom: max(20px, var(--safe-bottom)); }
-  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--text); margin-bottom: 6px; }
-  .modal-desc { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 16px; line-height: 1.6; }
-  .modal-close { float: right; background: transparent; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; margin-top: -4px; }
+/* ── CHECKLIST ─────────────────────────────────── */
+.check-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.check-item:last-child { border-bottom: none; }
+.check-box {
+  width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+  border: 2px solid var(--border2); background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; transition: all 0.2s;
+}
+.check-box.yes { background: rgba(61,158,110,0.2); border-color: var(--green); }
+.check-box.no { background: rgba(192,80,77,0.2); border-color: var(--red); }
+.check-box.na { background: rgba(201,168,76,0.15); border-color: var(--gold); }
+.check-label { font-size: clamp(13px, 3vw, 15px); color: var(--text-dim); flex: 1; }
+.check-status { font-size: 10px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
 
-  /* TOAST */
-  .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px; padding: 8px 16px; font-size: 11px; color: var(--text-dim); letter-spacing: 1px; z-index: 300; transition: opacity 0.3s; white-space: nowrap; }
-  .toast.hidden { opacity: 0; pointer-events: none; }
+/* ── OFFER OPTIONS ─────────────────────────────── */
+.offer-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.offer-opt label { font-size: 10px; color: var(--gold-dim); letter-spacing: 1px; }
 
-  /* OFFER SECTION */
-  .offer-label { font-size: 9px; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; margin: 12px 0 8px; }
-  .offer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .offer-option { text-align: center; }
-  .offer-option label { font-size: 8px; letter-spacing: 1px; color: var(--gold-dim); }
+/* ── BUTTONS ───────────────────────────────────── */
+.btn-gold {
+  width: 100%; background: var(--gold); color: #0a0a0a;
+  border: none; border-radius: var(--radius); padding: 16px;
+  font-size: clamp(10px, 2.5vw, 12px); letter-spacing: 3px; text-transform: uppercase;
+  cursor: pointer; font-family: 'DM Mono', monospace; font-weight: 500;
+  transition: transform 0.1s, opacity 0.2s; margin-top: 8px; min-height: var(--touch);
+}
+.btn-gold:active { transform: scale(0.98); opacity: 0.9; }
+.btn-ghost {
+  width: 100%; background: transparent; color: var(--text-muted);
+  border: 1px solid var(--border2); border-radius: var(--radius); padding: 14px;
+  font-size: clamp(9px, 2vw, 11px); letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; font-family: 'DM Mono', monospace; margin-top: 8px; min-height: var(--touch);
+}
+.btn-row { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-top: 8px; }
 
-  @media (min-width: 600px) {
-    #content { padding-left: 24px; padding-right: 24px; }
-    .field-row { gap: 16px; }
-  }
+/* ── DEAL LIST ─────────────────────────────────── */
+.deal-row { padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
+.deal-row:active { background: var(--surface2); }
+.deal-addr { font-size: clamp(13px, 3vw, 15px); color: var(--text); margin-bottom: 4px; }
+.deal-meta { font-size: clamp(9px, 2vw, 11px); color: var(--text-muted); letter-spacing: 1px; }
+.deal-del { background: transparent; border: none; color: #444; font-size: 22px; cursor: pointer; padding: 6px 10px; min-height: var(--touch); }
 
-  .slide-in { animation: slideIn 0.3s ease; }
-  @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+/* ── ANALYSIS ──────────────────────────────────── */
+.analysis-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+.a-section { font-size: clamp(9px, 2vw, 11px); letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin: 18px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.a-section:first-child { margin-top: 0; }
+.a-text { font-size: clamp(13px, 3vw, 14px); color: #bbb; line-height: 1.8; margin: 4px 0; }
+.a-bullet { font-size: clamp(12px, 2.8vw, 13px); color: #aaa; line-height: 1.7; margin: 3px 0; padding-left: 14px; border-left: 2px solid var(--border2); }
+.a-num { font-size: clamp(12px, 2.8vw, 13px); color: #ccc; line-height: 1.7; margin: 3px 0; }
+.verdict-go { color: var(--green); font-size: clamp(15px, 3.5vw, 18px); font-weight: 600; }
+.verdict-cond { color: var(--gold); font-size: clamp(15px, 3.5vw, 18px); font-weight: 600; }
+.verdict-no { color: var(--red); font-size: clamp(15px, 3.5vw, 18px); font-weight: 600; }
 
-  .pulse { animation: pulse 2s ease-in-out infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+/* ── LOADING ───────────────────────────────────── */
+.spinner { width: 44px; height: 44px; border: 2px solid var(--border2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── MODAL ─────────────────────────────────────── */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 500; display: flex; align-items: flex-end; backdrop-filter: blur(4px); }
+.modal-bg.hide { display: none; }
+.modal { background: var(--surface); border-radius: 16px 16px 0 0; border-top: 1px solid var(--border2); padding: 20px; width: 100%; padding-bottom: max(20px, var(--safe-bottom)); }
+.modal-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 400; margin-bottom: 6px; }
+.modal-desc { font-size: 11px; color: var(--text-muted); line-height: 1.7; margin-bottom: 16px; }
+.modal-close { float: right; background: transparent; border: none; color: var(--text-muted); font-size: 26px; cursor: pointer; margin-top: -4px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+
+/* ── TOAST ─────────────────────────────────────── */
+.toast { position: fixed; bottom: calc(var(--nav-h) + 12px); left: 50%; transform: translateX(-50%); background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px; padding: 10px 20px; font-size: 12px; color: var(--text-dim); letter-spacing: 1px; z-index: 300; white-space: nowrap; transition: opacity 0.3s; }
+.toast.hide { opacity: 0; pointer-events: none; }
+
+/* ── DESKTOP TWEAKS ────────────────────────────── */
+@media (min-width: 600px) {
+  #content { padding-left: 24px; padding-right: 24px; }
+  .field-row { gap: 16px; }
+  .card { padding: 20px; }
+}
+@media (min-width: 900px) {
+  #content { padding-top: calc(var(--header-h) + var(--stage-h) + var(--safe-top) + 24px); }
+  .pg-title { font-size: 42px; }
+}
 </style>
 </head>
 <body>
 
-<!-- SPLASH -->
 <div id="splash">
   <div class="splash-logo">ARIA</div>
   <div class="splash-sub">Automated Real Estate Intelligence Architecture</div>
-  <div class="splash-tagline">Systems Over Manual Action</div>
+  <div class="splash-tag">Systems Over Manual Action</div>
 </div>
 
-<!-- HEADER -->
-<div id="header">
-  <div class="header-inner">
-    <div>
-      <div class="logo-mark">ARIA</div>
-      <div class="logo-sub">Property Intelligence</div>
-    </div>
-    <div class="header-actions">
-      <button class="icon-btn" onclick="showDealsPanel()" title="My Deals">📁</button>
-      <button class="icon-btn" onclick="newDeal()" title="New Deal">＋</button>
-      <button class="icon-btn" onclick="toggleApiModal()" title="API Key">
-        <span class="api-dot" id="apiDot" style="background:#444"></span>⚙
-      </button>
-    </div>
+<div id="hdr">
+  <div class="logo-wrap">
+    <div class="logo-name">ARIA</div>
+    <div class="logo-tag">Property Intelligence</div>
+  </div>
+  <div class="hdr-btns">
+    <button class="hdr-btn" onclick="showDeals()" aria-label="My Deals">📁</button>
+    <button class="hdr-btn" onclick="newDeal()" aria-label="New Deal">＋</button>
+    <button class="hdr-btn" onclick="toggleApiModal()" aria-label="Settings">
+      <div class="api-dot" id="apiDot"></div>
+    </button>
   </div>
 </div>
 
-<!-- STAGE BAR -->
-<div id="stage-bar"></div>
+<div id="stages"></div>
 
-<!-- CONTENT -->
 <div id="content">
-  <div id="pageProperty" class="page slide-in"></div>
-  <div id="pageDeals" class="page slide-in" style="display:none"></div>
-  <div id="pageCosts" class="page slide-in" style="display:none"></div>
-  <div id="pageWorks" class="page slide-in" style="display:none"></div>
-  <div id="pageOffer" class="page slide-in" style="display:none"></div>
-  <div id="pageAnalysis" class="page slide-in" style="display:none"></div>
+  <div id="pgProperty" class="page on"></div>
+  <div id="pgDeals" class="page"></div>
+  <div id="pgCosts" class="page"></div>
+  <div id="pgWorks" class="page"></div>
+  <div id="pgOffer" class="page"></div>
+  <div id="pgAnalysis" class="page"></div>
 </div>
 
-<!-- NAV -->
 <div id="nav">
-  <button class="nav-item active" onclick="showPage('property')" id="nav-property">
-    <span class="nav-icon">🏠</span><span class="nav-label">Property</span>
-  </button>
-  <button class="nav-item" onclick="showPage('costs')" id="nav-costs">
-    <span class="nav-icon">💷</span><span class="nav-label">Costs</span>
-  </button>
-  <button class="nav-item" onclick="showPage('works')" id="nav-works">
-    <span class="nav-icon">🔨</span><span class="nav-label">Works</span>
-  </button>
-  <button class="nav-item" onclick="showPage('offer')" id="nav-offer">
-    <span class="nav-icon">🤝</span><span class="nav-label">Offer</span>
-  </button>
-  <button class="nav-item" onclick="showPage('analysis')" id="nav-analysis">
-    <span class="nav-icon">🔍</span><span class="nav-label">Analyse</span>
-  </button>
+  <button class="nav-btn on" id="nb-property" onclick="showPage('property')"><span class="nav-ico">🏠</span><span class="nav-lbl">Property</span></button>
+  <button class="nav-btn" id="nb-costs" onclick="showPage('costs')"><span class="nav-ico">💷</span><span class="nav-lbl">Costs</span></button>
+  <button class="nav-btn" id="nb-works" onclick="showPage('works')"><span class="nav-ico">🔨</span><span class="nav-lbl">Works</span></button>
+  <button class="nav-btn" id="nb-offer" onclick="showPage('offer')"><span class="nav-ico">🤝</span><span class="nav-lbl">Offer</span></button>
+  <button class="nav-btn" id="nb-analysis" onclick="showPage('analysis')"><span class="nav-ico">🔍</span><span class="nav-lbl">Analyse</span></button>
 </div>
 
-<!-- API MODAL -->
-<div class="modal-overlay hidden" id="apiModal" onclick="closeApiModal(event)">
-  <div class="modal-sheet">
+<div class="modal-bg hide" id="apiModal" onclick="closeModalBg(event)">
+  <div class="modal">
     <button class="modal-close" onclick="toggleApiModal()">×</button>
     <div class="modal-title">API Key</div>
-    <div class="modal-desc">Get your free key at anthropic.com → Console. Paste it below. It stays on your device only — never sent anywhere except Anthropic.</div>
+    <div class="modal-desc">Get your free key at console.anthropic.com → API Keys. Paste it below. Stored only on your device.</div>
     <div class="field">
       <label>Anthropic API Key</label>
-      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+      <input type="password" id="apiIn" placeholder="sk-ant-..." autocomplete="off">
     </div>
-    <button class="btn-gold" onclick="saveApiKey()">Save Key</button>
+    <button class="btn-gold" onclick="saveApi()">Save Key</button>
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast hidden" id="toast"></div>
+<div class="toast hide" id="toast"></div>
 
 <script>
-// ─── STATE ───────────────────────────────────────────────────────────────────
-const STAGES = ["Initial Analysis","Viewing Booked","Offer Made","Under Offer","Due Diligence","Exchanged","Completed"];
-const STRATEGIES = ["HMO","SEA / Supported Living","Lease Option","BMV Purchase","Deal Sourcing / Assign","Buy to Let","SA / Serviced Accommodation"];
-const PROP_TYPES = ["Terraced","Semi-Detached","Detached","Flat / Apartment","Bungalow","Commercial Conversion","HMO (existing)"];
-const WORKS_ITEMS = ["Doors & Windows","Joists & Floorboards","Chimney breasts, lintels & structural","Brickwork","Roof, Guttering & Fascias","External walls render","Electrical & rewire – 1st fix","Switches & sockets – 2nd fix","Lighting","HDMI, CAT6, Wifi Points","Fire safety panels & sensors","Emergency lights","Studs, plasterboards & insulation","Cupboards and Boxing ins","Skirting board, Architrave","Internal doors, window sills","Locks & ironmongery","Plumbing & Heating","Kitchen","Bathroom","Tiling","Painting","Flooring","Carpets","Garden and Landscaping"];
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const STAGES = ['Initial Analysis','Viewing Booked','Offer Made','Under Offer','Due Diligence','Exchanged','Completed'];
+const STRATEGIES = ['HMO — Buy to Let','SEA A — Birmingham (Find & Hand Over)','SEA B — Rent to Rent SEA (Nottingham/Derby)','Rent to Rent — HMO','Rent to Rent — SA (Serviced Accommodation)','Lease Option','BMV Purchase','Deal Sourcing / Assign','Buy to Let — Standard'];
+const PROP_TYPES = ['Terraced','Semi-Detached','Detached','Flat / Apartment','Commercial Conversion','HMO (existing licensed)','HMO (existing unlicensed)'];
+const WORKS = ['Doors & Windows','Joists & Floorboards','Chimney breasts, lintels & structural','Brickwork','Roof, Guttering & Fascias','External walls render','Electrical & rewire – 1st fix','Switches & sockets – 2nd fix','Lighting','HDMI, CAT6, Wifi & extenders','Fire safety panels & sensors','Emergency lighting','Studs, plasterboards & insulation','Cupboards and Boxing ins','Skirting board, Architrave','Internal doors, window sills','Locks & ironmongery','Plumbing & Heating','Kitchen','Bathroom','Tiling','Painting','Flooring','Carpets','Garden and Landscaping','Fire door replacements','Intumescent strips & seals','Thumb turn locks','Smoke alarm installation','Carbon monoxide detectors','Deep clean','Redecoration'];
+const COMPLIANCE = [
+  {id:'firedoors',label:'Fire doors (all rooms & communal)'},
+  {id:'firealarm',label:'Fire alarm system (Grade D minimum)'},
+  {id:'emlight',label:'Emergency lighting'},
+  {id:'smoke',label:'Smoke alarms (each room)'},
+  {id:'co',label:'Carbon monoxide detectors'},
+  {id:'thumbturn',label:'Thumb turn locks on fire doors'},
+  {id:'intumescent',label:'Intumescent strips fitted'},
+  {id:'blanket',label:'Fire blanket in kitchen'},
+  {id:'extinguisher',label:'Fire extinguisher'},
+  {id:'hmoLic',label:'HMO licence in place (if required)'},
+  {id:'epc',label:'EPC rating C or above'},
+  {id:'gas',label:'Gas safety certificate (annual)'},
+  {id:'eicr',label:'EICR electrical certificate'},
+  {id:'pat',label:'PAT testing'},
+  {id:'asbestos',label:'Asbestos survey'},
+  {id:'legionella',label:'Legionella risk assessment'},
+];
 
-let currentPage = 'property';
-let apiKey = localStorage.getItem('aria_api') || '';
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let apiKey = localStorage.getItem('aria_key') || '';
 let deals = [];
-let deal = newDealObj();
-let analysisResult = '';
+let deal = blankDeal();
+let activePage = 'property';
+let analysisText = '';
+let recognition = null;
+let isListening = false;
+let activeVoiceTarget = null;
 
-try { deals = JSON.parse(localStorage.getItem('aria_deals') || '[]'); } catch(e) {}
+try { deals = JSON.parse(localStorage.getItem('aria_deals') || '[]'); } catch(e){}
 
-function newDealObj() {
+function blankDeal() {
   return {
     id: Date.now(),
     createdAt: new Date().toISOString(),
     stage: 'Initial Analysis',
-    property: { address:'', type:'', bedrooms:'', askingPrice:'', strategy:'', notes:'' },
-    costs: { deposit:'', finance:'', solicitors:'', estateAgent:'', stampDuty:'', fees:'', contingency:'' },
-    works: WORKS_ITEMS.map(item => ({ item, qty:1, rate:0 })),
-    offer: { rooms:'', weeklyRate:'', monthlyRent:'', refinance:'', desire:'', objection:'', o1a:'', o1b:'', o1c:'', o2a:'', o2b:'', o2c:'', followUp:'' },
+    prop: { address:'', type:'', beds:'', askPrice:'', strategy:'', notes:'' },
+    costs: { rent:'', lease:'', setup:'', finance:'', solicitors:'', fees:'', contingency:'' },
+    compliance: {},
+    works: WORKS.map(w => ({ name:w, qty:1, rate:0 })),
+    offer: {
+      rooms:'', weeklyRate:'', monthlyRent:'', refinance:'',
+      desire:'', objection:'',
+      o1a:'', o1b:'', o1c:'', o2a:'', o2b:'', o2c:'',
+      followUp:''
+    },
     photos: []
   };
 }
 
-// ─── COMPUTED ─────────────────────────────────────────────────────────────────
-function worksTotal() { return deal.works.reduce((s,w) => s + (w.qty * w.rate), 0); }
-function costsSubtotal() { return ['deposit','finance','solicitors','estateAgent','stampDuty','fees','contingency'].reduce((s,k) => s + (parseFloat(deal.costs[k])||0), 0); }
-function totalCost() { return costsSubtotal() + worksTotal(); }
-function monthlyIncome() {
-  if (deal.offer.rooms && deal.offer.weeklyRate) return parseFloat(deal.offer.rooms) * parseFloat(deal.offer.weeklyRate) * 52 / 12;
-  return parseFloat(deal.offer.monthlyRent) || 0;
-}
-function grossYield() {
-  const ask = parseFloat(deal.property.askingPrice);
-  if (!ask || !monthlyIncome()) return 0;
-  return (monthlyIncome() * 12 / ask * 100);
-}
-function fmt(n) { return n > 0 ? '£' + Math.round(n).toLocaleString('en-GB') : '—'; }
+// ═══════════════════════════════════════════════════
+// COMPUTED
+// ═══════════════════════════════════════════════════
+const f = n => n > 0 ? '£' + Math.round(n).toLocaleString('en-GB') : '—';
+const num = v => parseFloat(v) || 0;
 
-// ─── STORAGE ──────────────────────────────────────────────────────────────────
-function saveCurrentDeal() {
+function worksTotal() { return deal.works.reduce((s,w) => s + w.qty * w.rate, 0); }
+
+function monthlyIncome() {
+  if (deal.offer.rooms && deal.offer.weeklyRate)
+    return num(deal.offer.rooms) * num(deal.offer.weeklyRate) * 52 / 12;
+  return num(deal.offer.monthlyRent);
+}
+
+function isRTR() {
+  return deal.prop.strategy && deal.prop.strategy.includes('Rent to Rent') || deal.prop.strategy.includes('SEA B');
+}
+
+function totalCosts() {
+  const costKeys = isRTR()
+    ? ['rent','setup','fees','contingency']
+    : ['rent','finance','solicitors','fees','contingency'];
+  return costKeys.reduce((s,k) => s + num(deal.costs[k]), 0) + worksTotal();
+}
+
+function grossYield() {
+  const ask = num(deal.prop.askPrice);
+  if (!ask || !monthlyIncome()) return 0;
+  return monthlyIncome() * 12 / ask * 100;
+}
+
+// ═══════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════
+function saveDeal() {
   deal.updatedAt = new Date().toISOString();
-  const idx = deals.findIndex(d => d.id === deal.id);
-  if (idx >= 0) deals[idx] = deal; else deals.unshift(deal);
+  const i = deals.findIndex(d => d.id === deal.id);
+  if (i >= 0) deals[i] = deal; else deals.unshift(deal);
   localStorage.setItem('aria_deals', JSON.stringify(deals));
-  showToast('Deal saved');
+  toast('Deal saved');
 }
 
 function loadDeal(d) {
   deal = JSON.parse(JSON.stringify(d));
-  analysisResult = '';
+  analysisText = '';
   showPage('property');
-  renderAll();
 }
 
 function newDeal() {
-  deal = newDealObj();
-  analysisResult = '';
+  deal = blankDeal();
+  analysisText = '';
   showPage('property');
-  renderAll();
 }
 
 function deleteDeal(id, e) {
   e.stopPropagation();
-  if (confirm('Delete this deal?')) {
-    deals = deals.filter(d => d.id !== id);
-    localStorage.setItem('aria_deals', JSON.stringify(deals));
-    if (deal.id === id) newDeal();
-    renderDeals();
-  }
+  if (!confirm('Delete this deal?')) return;
+  deals = deals.filter(d => d.id !== id);
+  localStorage.setItem('aria_deals', JSON.stringify(deals));
+  if (deal.id === id) newDeal();
+  else renderDeals();
 }
 
-// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════
 function showPage(name) {
-  currentPage = name;
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('page' + name.charAt(0).toUpperCase() + name.slice(1)).style.display = 'block';
-  const navEl = document.getElementById('nav-' + name);
-  if (navEl) navEl.classList.add('active');
-  window.scrollTo(0, 0);
+  activePage = name;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  const pg = document.getElementById('pg' + name.charAt(0).toUpperCase() + name.slice(1));
+  if (pg) pg.classList.add('on');
+  const nb = document.getElementById('nb-' + name);
+  if (nb) nb.classList.add('on');
+  window.scrollTo(0,0);
   render(name);
 }
 
-function showDealsPanel() {
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('pageDeals').style.display = 'block';
+function showDeals() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('pgDeals').classList.add('on');
   renderDeals();
 }
 
-// ─── RENDER ───────────────────────────────────────────────────────────────────
-function renderAll() { render(currentPage); renderStageBar(); }
+// ═══════════════════════════════════════════════════
+// STAGES
+// ═══════════════════════════════════════════════════
+function renderStages() {
+  document.getElementById('stages').innerHTML = STAGES.map(s =>
+    `<button class="s-pill ${deal.stage===s?'on':''}" onclick="setStage('${s}')">${s}</button>`
+  ).join('');
+}
+function setStage(s) { deal.stage = s; renderStages(); }
 
+// ═══════════════════════════════════════════════════
+// VOICE
+// ═══════════════════════════════════════════════════
+function initVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-GB';
+  recognition.onresult = e => {
+    if (!activeVoiceTarget) return;
+    let transcript = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    activeVoiceTarget.value = transcript;
+    activeVoiceTarget.dispatchEvent(new Event('input'));
+  };
+  recognition.onend = () => { isListening = false; updateMicBtns(); };
+  recognition.onerror = () => { isListening = false; updateMicBtns(); };
+}
+
+function toggleVoice(targetId) {
+  if (!recognition) { toast('Voice not supported on this device'); return; }
+  const el = document.getElementById(targetId);
+  if (!el) return;
+  if (isListening && activeVoiceTarget === el) {
+    recognition.stop(); isListening = false; activeVoiceTarget = null;
+  } else {
+    if (isListening) recognition.stop();
+    activeVoiceTarget = el;
+    recognition.start(); isListening = true;
+  }
+  updateMicBtns();
+}
+
+function updateMicBtns() {
+  document.querySelectorAll('.mic-btn').forEach(btn => {
+    const tid = btn.dataset.target;
+    const el = document.getElementById(tid);
+    btn.classList.toggle('listening', isListening && activeVoiceTarget === el);
+    btn.textContent = (isListening && activeVoiceTarget === el) ? '⏹' : '🎤';
+  });
+}
+
+function voiceField(id, placeholder, oninput) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const hasVoice = !!SR;
+  return `<div class="voice-wrap">
+    <textarea id="${id}" placeholder="${placeholder}" oninput="${oninput}">${'<!-- val -->'}</textarea>
+    ${hasVoice ? `<button class="mic-btn" data-target="${id}" onclick="toggleVoice('${id}')" title="Tap to dictate">🎤</button>` : ''}
+    ${hasVoice ? `<div class="mic-hint">Tap 🎤 to speak</div>` : ''}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
 function render(name) {
-  renderStageBar();
+  renderStages();
   if (name === 'property') renderProperty();
   else if (name === 'costs') renderCosts();
   else if (name === 'works') renderWorks();
@@ -423,166 +579,156 @@ function render(name) {
   else if (name === 'analysis') renderAnalysis();
 }
 
-function renderStageBar() {
-  const bar = document.getElementById('stage-bar');
-  bar.innerHTML = STAGES.map(s => `<button class="stage-pill ${deal.stage===s?'active':''}" onclick="setStage('${s}')">${s}</button>`).join('');
-}
-
-function setStage(s) { deal.stage = s; renderStageBar(); }
-
+// ── PROPERTY PAGE ──
 function renderProperty() {
-  const mi = monthlyIncome(); const gy = grossYield(); const tc = totalCost();
-  document.getElementById('pageProperty').innerHTML = `
-    <div class="section-header">
-      <div class="section-title">Property</div>
-      <div class="section-desc">Enter the property details</div>
-    </div>
-    ${mi > 0 ? `<div class="stats-bar">
-      <div class="stat-cell"><span class="stat-val">${fmt(mi)}</span><span class="stat-lab">Monthly</span></div>
-      <div class="stat-cell"><span class="stat-val">${fmt(tc)}</span><span class="stat-lab">All-In</span></div>
-      <div class="stat-cell"><span class="stat-val ${gy>8?'green':gy>5?'':'red'}">${gy>0?gy.toFixed(1)+'%':'—'}</span><span class="stat-lab">Yield</span></div>
+  const mi = monthlyIncome(), gy = grossYield(), tc = totalCosts();
+  document.getElementById('pgProperty').innerHTML = `
+    <div class="pg-title">Property</div>
+    <div class="pg-desc">Enter the property details</div>
+    ${mi > 0 ? `<div class="stats s3">
+      <div class="stat"><span class="stat-v">${f(mi)}</span><span class="stat-l">Monthly</span></div>
+      <div class="stat"><span class="stat-v">${f(tc)}</span><span class="stat-l">All-In</span></div>
+      <div class="stat"><span class="stat-v ${gy>8?'g':gy>5?'':'r'}">${gy>0?gy.toFixed(1)+'%':'—'}</span><span class="stat-l">Yield</span></div>
     </div>` : ''}
     <div class="card">
-      <div class="card-title">Address & Type</div>
+      <div class="card-hd">Address & Details</div>
       <div class="field">
         <label>Full Address</label>
-        <input type="text" value="${deal.property.address}" oninput="deal.property.address=this.value" placeholder="123 Example St, Derby DE1 2AB" autocomplete="street-address">
+        <input type="text" value="${deal.prop.address}" oninput="deal.prop.address=this.value" placeholder="123 Example Street, Derby DE1 2AB" autocomplete="street-address">
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Type</label>
-          <select onchange="deal.property.type=this.value">
+          <label>Property Type</label>
+          <select onchange="deal.prop.type=this.value">
             <option value="">Select...</option>
-            ${PROP_TYPES.map(t => `<option ${deal.property.type===t?'selected':''}>${t}</option>`).join('')}
+            ${PROP_TYPES.map(t => `<option ${deal.prop.type===t?'selected':''}>${t}</option>`).join('')}
           </select>
         </div>
         <div class="field">
           <label>Bedrooms</label>
-          <input type="number" value="${deal.property.bedrooms}" oninput="deal.property.bedrooms=this.value" placeholder="6" inputmode="numeric">
+          <input type="number" value="${deal.prop.beds}" oninput="deal.prop.beds=this.value" placeholder="6" inputmode="numeric">
         </div>
       </div>
       <div class="field">
         <label>Asking Price (£)</label>
-        <input type="number" value="${deal.property.askingPrice}" oninput="deal.property.askingPrice=this.value;renderProperty()" placeholder="250000" inputmode="numeric">
+        <input type="number" value="${deal.prop.askPrice}" oninput="deal.prop.askPrice=this.value;renderProperty()" placeholder="250000" inputmode="decimal">
       </div>
       <div class="field">
-        <label>Strategy</label>
-        <select onchange="deal.property.strategy=this.value">
+        <label>Investment Strategy</label>
+        <select onchange="deal.prop.strategy=this.value;renderProperty()">
           <option value="">Select strategy...</option>
-          ${STRATEGIES.map(s => `<option ${deal.property.strategy===s?'selected':''}>${s}</option>`).join('')}
+          ${STRATEGIES.map(s => `<option ${deal.prop.strategy===s?'selected':''}>${s}</option>`).join('')}
         </select>
       </div>
       <div class="field">
-        <label>Initial Notes</label>
-        <textarea oninput="deal.property.notes=this.value" placeholder="Vendor situation, condition, what caught your eye...">${deal.property.notes}</textarea>
+        <label>Initial Notes — tap 🎤 to dictate</label>
+        <div class="voice-wrap">
+          <textarea id="notesTA" placeholder="Speak or type — vendor situation, condition, what caught your eye, anything useful..." oninput="deal.prop.notes=this.value" style="min-height:120px">${deal.prop.notes}</textarea>
+          <button class="mic-btn" data-target="notesTA" onclick="toggleVoice('notesTA')" title="Tap to dictate">🎤</button>
+        </div>
+        <div class="mic-hint">Tap 🎤 to dictate your notes hands-free</div>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">Property Photos</div>
-      <div id="photoGrid" class="photo-grid"></div>
-      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+      <div class="card-hd">Property Photos</div>
+      <div id="photoGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px"></div>
+      <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(event)">
     </div>
-    <button class="btn-gold" onclick="saveCurrentDeal();showPage('costs')">Save & Continue to Costs →</button>
+    <button class="btn-gold" onclick="saveDeal();showPage('costs')">Save & Continue to Costs →</button>
   `;
   renderPhotos();
+  updateMicBtns();
 }
 
 function renderPhotos() {
-  const grid = document.getElementById('photoGrid');
-  if (!grid) return;
-  let html = (deal.photos||[]).map((p,i) => `
-    <div class="photo-thumb">
-      <img src="${p.data}" alt="${p.label||''}">
-      <button class="del-photo" onclick="deletePhoto(${i})">×</button>
-    </div>
-  `).join('');
-  html += `<div class="photo-add" onclick="document.getElementById('photoInput').click()"><span>📷</span><small>Add Photo</small></div>`;
-  grid.innerHTML = html;
+  const g = document.getElementById('photoGrid');
+  if (!g) return;
+  let h = (deal.photos||[]).map((p,i) => `
+    <div style="aspect-ratio:1;border-radius:8px;overflow:hidden;position:relative;background:var(--bg);border:1px solid var(--border2)">
+      <img src="${p.data}" style="width:100%;height:100%;object-fit:cover">
+      <button onclick="deal.photos.splice(${i},1);renderPhotos()" style="position:absolute;top:4px;right:4px;width:24px;height:24px;background:rgba(0,0,0,0.7);border-radius:50%;border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center">×</button>
+    </div>`).join('');
+  h += `<div onclick="document.getElementById('photoIn').click()" style="aspect-ratio:1;border-radius:8px;border:1.5px dashed var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px">
+    <span style="font-size:26px">📷</span><span style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase">Add Photo</span>
+  </div>`;
+  g.innerHTML = h;
 }
 
-function handlePhoto(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    if (!deal.photos) deal.photos = [];
-    deal.photos.push({ data: ev.target.result, label: '', ts: Date.now() });
-    renderPhotos();
-  };
-  reader.readAsDataURL(file);
-  e.target.value = '';
+function addPhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => { if (!deal.photos) deal.photos = []; deal.photos.push({data:ev.target.result}); renderPhotos(); };
+  r.readAsDataURL(file); e.target.value = '';
 }
 
-function deletePhoto(idx) { deal.photos.splice(idx, 1); renderPhotos(); }
-
+// ── COSTS PAGE ──
 function renderCosts() {
-  const costs = [['deposit','Deposit'],['finance','Finance / Bridging'],['solicitors','Solicitors'],['estateAgent','Estate Agent'],['stampDuty','Stamp Duty'],['fees','Other Fees'],['contingency','Contingency (10% recommended)']];
-  const sub = costsSubtotal(); const wt = worksTotal(); const tot = sub + wt;
-  document.getElementById('pageCosts').innerHTML = `
-    <div class="section-header">
-      <div class="section-title">Costs</div>
-      <div class="section-desc">All acquisition costs excluding works</div>
-    </div>
+  const rtr = isRTR();
+  const fields = rtr
+    ? [['rent','Monthly Rent to Landlord (£)'],['lease','Lease Length (months)'],['setup','Setup / Compliance Costs (£)'],['fees','Other Fees (£)'],['contingency','Contingency (£)']]
+    : [['rent','Deposit / First Month Rent (£)'],['finance','Finance / Bridging (£)'],['solicitors','Solicitors (£)'],['fees','Other Fees (£)'],['contingency','Contingency (£)']];
+  const tc = totalCosts(); const wt = worksTotal();
+  document.getElementById('pgCosts').innerHTML = `
+    <div class="pg-title">Costs</div>
+    <div class="pg-desc">${rtr ? 'Rent to rent deal costs' : 'Acquisition costs'}</div>
     <div class="card">
-      <div class="card-title">Deal Costs</div>
-      ${costs.map(([k,lab]) => `<div class="field"><label>${lab} (£)</label><input type="number" value="${deal.costs[k]||''}" oninput="deal.costs['${k}']=this.value;renderCosts()" placeholder="0" inputmode="decimal"></div>`).join('')}
+      <div class="card-hd">${rtr ? 'Rent to Rent Costs' : 'Deal Costs'}</div>
+      ${fields.map(([k,lab]) => `<div class="field"><label>${lab}</label><input type="number" value="${deal.costs[k]||''}" oninput="deal.costs['${k}']=this.value;renderCosts()" placeholder="0" inputmode="decimal"></div>`).join('')}
     </div>
-    <div class="stats-bar" style="margin-bottom:12px">
-      <div class="stat-cell"><span class="stat-val">${fmt(sub)}</span><span class="stat-lab">Costs</span></div>
-      <div class="stat-cell"><span class="stat-val">${fmt(wt)}</span><span class="stat-lab">Works</span></div>
-      <div class="stat-cell"><span class="stat-val">${fmt(tot)}</span><span class="stat-lab">Total In</span></div>
+    <div class="stats s3">
+      <div class="stat"><span class="stat-v">${f(tc-wt)}</span><span class="stat-l">Costs</span></div>
+      <div class="stat"><span class="stat-v">${f(wt)}</span><span class="stat-l">Works</span></div>
+      <div class="stat"><span class="stat-v">${f(tc)}</span><span class="stat-l">Total In</span></div>
     </div>
-    <button class="btn-ghost" onclick="showPage('property')">← Back</button>
-    <button class="btn-gold" onclick="showPage('works')">Continue to Works →</button>
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="showPage('property')">← Back</button>
+      <button class="btn-gold" onclick="showPage('works')">Works Spec →</button>
+    </div>
   `;
 }
 
+// ── WORKS PAGE ──
 function renderWorks() {
   const wt = worksTotal();
-  document.getElementById('pageWorks').innerHTML = `
-    <div class="section-header">
-      <div class="section-title">Works Spec</div>
-      <div class="section-desc">Enter your contractor rates</div>
-    </div>
-    <div class="card" style="padding:12px">
-      <div class="works-header">
-        <span>Item</span><span style="text-align:right">Qty</span><span style="text-align:right">Rate £</span><span style="text-align:right">Total</span>
-      </div>
+  document.getElementById('pgWorks').innerHTML = `
+    <div class="pg-title">Works Spec</div>
+    <div class="pg-desc">Your contractor rates</div>
+    <div class="card" style="padding:12px 14px">
+      <div class="wk-hd"><span>Item</span><span style="text-align:right">Qty</span><span style="text-align:right">Rate £</span><span style="text-align:right">Total</span></div>
       ${deal.works.map((w,i) => `
-        <div class="work-row">
-          <div class="work-name">${w.item}</div>
-          <input class="work-input" type="number" value="${w.qty||1}" oninput="deal.works[${i}].qty=parseFloat(this.value)||0;renderWorksTotal()" inputmode="numeric">
-          <input class="work-input" type="number" value="${w.rate||''}" oninput="deal.works[${i}].rate=parseFloat(this.value)||0;renderWorksTotal()" placeholder="0" inputmode="decimal">
-          <div class="work-total ${w.qty*w.rate>0?'':'zero'}" id="wt${i}">${w.qty*w.rate>0?fmt(w.qty*w.rate):'—'}</div>
-        </div>
-      `).join('')}
+        <div class="wk-row">
+          <div class="wk-name">${w.name}</div>
+          <input class="wk-in" type="number" value="${w.qty||1}" oninput="deal.works[${i}].qty=parseFloat(this.value)||0;updateWorkRow(${i})" inputmode="numeric">
+          <input class="wk-in" type="number" value="${w.rate||''}" oninput="deal.works[${i}].rate=parseFloat(this.value)||0;updateWorkRow(${i})" placeholder="0" inputmode="decimal">
+          <div class="wk-tot ${w.qty*w.rate>0?'':'z'}" id="wkT${i}">${w.qty*w.rate>0?f(w.qty*w.rate):'—'}</div>
+        </div>`).join('')}
     </div>
-    <div class="stats-bar" style="margin-bottom:12px">
-      <div class="stat-cell" style="grid-column:1/-1"><span class="stat-val">${fmt(wt)}</span><span class="stat-lab">Works Total</span></div>
+    <div class="stats s2">
+      <div class="stat"><span class="stat-v" id="wksTot">${f(wt)}</span><span class="stat-l">Works Total</span></div>
+      <div class="stat"><span class="stat-v">${f(totalCosts())}</span><span class="stat-l">All-In Total</span></div>
     </div>
-    <button class="btn-ghost" onclick="showPage('costs')">← Back</button>
-    <button class="btn-gold" onclick="showPage('offer')">Continue to Offer →</button>
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="showPage('costs')">← Back</button>
+      <button class="btn-gold" onclick="showPage('offer')">Offer →</button>
+    </div>
   `;
 }
 
-function renderWorksTotal() {
-  const wt = worksTotal();
-  deal.works.forEach((w,i) => {
-    const el = document.getElementById('wt'+i);
-    if (el) { el.textContent = w.qty*w.rate>0 ? fmt(w.qty*w.rate) : '—'; el.className = 'work-total '+(w.qty*w.rate>0?'':'zero'); }
-  });
-  const bars = document.querySelectorAll('.stat-val');
-  if (bars.length) bars[bars.length-1].textContent = fmt(wt);
+function updateWorkRow(i) {
+  const w = deal.works[i];
+  const el = document.getElementById('wkT'+i);
+  if (el) { el.textContent = w.qty*w.rate>0?f(w.qty*w.rate):'—'; el.className='wk-tot '+(w.qty*w.rate>0?'':'z'); }
+  const tot = document.getElementById('wksTot');
+  if (tot) tot.textContent = f(worksTotal());
 }
 
+// ── OFFER PAGE ──
 function renderOffer() {
-  document.getElementById('pageOffer').innerHTML = `
-    <div class="section-header">
-      <div class="section-title">Offer</div>
-      <div class="section-desc">Income projections & negotiation strategy</div>
-    </div>
+  document.getElementById('pgOffer').innerHTML = `
+    <div class="pg-title">Offer</div>
+    <div class="pg-desc">Income & negotiation strategy</div>
     <div class="card">
-      <div class="card-title">Income Projection</div>
+      <div class="card-hd">Income Projection</div>
       <div class="field-row">
         <div class="field"><label>Rooms</label><input type="number" value="${deal.offer.rooms}" oninput="deal.offer.rooms=this.value" placeholder="6" inputmode="numeric"></div>
         <div class="field"><label>Weekly / Room (£)</label><input type="number" value="${deal.offer.weeklyRate}" oninput="deal.offer.weeklyRate=this.value" placeholder="350" inputmode="decimal"></div>
@@ -591,153 +737,166 @@ function renderOffer() {
       <div class="field"><label>Refinance / End Value (£)</label><input type="number" value="${deal.offer.refinance}" oninput="deal.offer.refinance=this.value" placeholder="300000" inputmode="decimal"></div>
     </div>
     <div class="card">
-      <div class="card-title">Negotiation Levers</div>
-      <div class="field"><label>"I really like this but..." (Desire)</label><textarea oninput="deal.offer.desire=this.value" placeholder="I really like this property but the refurb costs are significant...">${deal.offer.desire}</textarea></div>
-      <div class="field"><label>"I really want to do this but..." (Objection)</label><textarea oninput="deal.offer.objection=this.value" placeholder="I really want to do this deal but the numbers only work at...">${deal.offer.objection}</textarea></div>
+      <div class="card-hd">Negotiation — tap 🎤 to dictate</div>
+      <div class="field">
+        <label>"I really like this but..." — your desire lever</label>
+        <div class="voice-wrap">
+          <textarea id="desireTA" placeholder="Tap 🎤 or type your desire angle..." oninput="deal.offer.desire=this.value">${deal.offer.desire}</textarea>
+          <button class="mic-btn" data-target="desireTA" onclick="toggleVoice('desireTA')">🎤</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>"I really want this but..." — your objection</label>
+        <div class="voice-wrap">
+          <textarea id="objTA" placeholder="Tap 🎤 or type your objection..." oninput="deal.offer.objection=this.value">${deal.offer.objection}</textarea>
+          <button class="mic-btn" data-target="objTA" onclick="toggleVoice('objTA')">🎤</button>
+        </div>
+      </div>
     </div>
     <div class="card">
-      <div class="card-title">Offer Options</div>
-      <div class="offer-label">1st Offer — A (ambitious) · B (target) · C (limit)</div>
-      <div class="offer-grid">
-        ${[['o1a','A'],['o1b','B'],['o1c','C']].map(([k,l]) => `<div class="offer-option"><label>${l}</label><input type="number" value="${deal.offer[k]}" oninput="deal.offer['${k}']=this.value" placeholder="£" inputmode="numeric"></div>`).join('')}
+      <div class="card-hd">Offer Options</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:10px">1st Offer — A (ambitious) · B (target) · C (limit)</div>
+      <div class="offer-opts">
+        ${[['o1a','A'],['o1b','B'],['o1c','C']].map(([k,l])=>`<div class="field offer-opt"><label>${l}</label><input type="number" value="${deal.offer[k]}" oninput="deal.offer['${k}']=this.value" placeholder="£" inputmode="numeric"></div>`).join('')}
       </div>
-      <div class="offer-label" style="margin-top:14px">2nd Offer — if rejected</div>
-      <div class="offer-grid">
-        ${[['o2a','A'],['o2b','B'],['o2c','C']].map(([k,l]) => `<div class="offer-option"><label>${l}</label><input type="number" value="${deal.offer[k]}" oninput="deal.offer['${k}']=this.value" placeholder="£" inputmode="numeric"></div>`).join('')}
+      <div style="font-size:10px;color:var(--text-muted);margin:14px 0 10px">2nd Offer — if rejected</div>
+      <div class="offer-opts">
+        ${[['o2a','A'],['o2b','B'],['o2c','C']].map(([k,l])=>`<div class="field offer-opt"><label>${l}</label><input type="number" value="${deal.offer[k]}" oninput="deal.offer['${k}']=this.value" placeholder="£" inputmode="numeric"></div>`).join('')}
       </div>
-      <div class="field" style="margin-top:14px"><label>Follow Up Notes</label><textarea oninput="deal.offer.followUp=this.value" placeholder="Next steps, vendor notes, call dates...">${deal.offer.followUp}</textarea></div>
+      <div class="field" style="margin-top:14px">
+        <label>Follow Up Notes — tap 🎤 to dictate</label>
+        <div class="voice-wrap">
+          <textarea id="followTA" placeholder="Next steps, vendor notes, call dates..." oninput="deal.offer.followUp=this.value">${deal.offer.followUp}</textarea>
+          <button class="mic-btn" data-target="followTA" onclick="toggleVoice('followTA')">🎤</button>
+        </div>
+      </div>
     </div>
-    <button class="btn-ghost" onclick="showPage('works')">← Back</button>
-    <button class="btn-gold" onclick="saveCurrentDeal();showPage('analysis');runAnalysis()">🔍 Analyse This Deal with AI</button>
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="showPage('works')">← Back</button>
+      <button class="btn-gold" onclick="saveDeal();showPage('analysis');runAnalysis()">🔍 Analyse with AI</button>
+    </div>
   `;
+  updateMicBtns();
 }
 
+// ── ANALYSIS PAGE ──
 function renderAnalysis() {
-  const mi = monthlyIncome(); const gy = grossYield(); const tc = totalCost();
-  const ask = parseFloat(deal.property.askingPrice)||0;
-  document.getElementById('pageAnalysis').innerHTML = `
-    <div class="section-header">
-      <div class="section-title">Analysis</div>
-      <div class="section-desc">${deal.property.address || 'Current deal'}</div>
+  const mi = monthlyIncome(), gy = grossYield(), tc = totalCosts();
+  document.getElementById('pgAnalysis').innerHTML = `
+    <div class="pg-title">Analysis</div>
+    <div class="pg-desc">${deal.prop.address || 'Current deal'}</div>
+    <div class="stats s3">
+      <div class="stat"><span class="stat-v">${f(num(deal.prop.askPrice))}</span><span class="stat-l">Asking</span></div>
+      <div class="stat"><span class="stat-v">${f(tc)}</span><span class="stat-l">All-In</span></div>
+      <div class="stat"><span class="stat-v ${gy>8?'g':gy>5?'':'r'}">${gy>0?gy.toFixed(1)+'%':'—'}</span><span class="stat-l">Yield</span></div>
     </div>
-    <div class="stats-bar" style="margin-bottom:12px">
-      <div class="stat-cell"><span class="stat-val">${fmt(ask)}</span><span class="stat-lab">Asking</span></div>
-      <div class="stat-cell"><span class="stat-val">${fmt(tc)}</span><span class="stat-lab">All-In</span></div>
-      <div class="stat-cell"><span class="stat-val ${gy>8?'green':gy>5?'':'red'}">${gy>0?gy.toFixed(1)+'%':'—'}</span><span class="stat-lab">Yield</span></div>
-    </div>
-    <div class="stats-bar" style="margin-bottom:12px">
-      <div class="stat-cell"><span class="stat-val">${fmt(mi)}</span><span class="stat-lab">Monthly</span></div>
-      <div class="stat-cell"><span class="stat-val">${fmt(mi*12)}</span><span class="stat-lab">Annual</span></div>
-      <div class="stat-cell"><span class="stat-val">${fmt(worksTotal())}</span><span class="stat-lab">Works</span></div>
+    <div class="stats s3">
+      <div class="stat"><span class="stat-v">${f(mi)}</span><span class="stat-l">Monthly</span></div>
+      <div class="stat"><span class="stat-v">${f(mi*12)}</span><span class="stat-l">Annual</span></div>
+      <div class="stat"><span class="stat-v">${f(worksTotal())}</span><span class="stat-l">Works</span></div>
     </div>
     <div id="analysisContent">
-      ${analysisResult ? renderAnalysisText(analysisResult) : `<div class="card" style="text-align:center;padding:40px">
-        <div class="empty-icon">🔍</div>
-        <div class="empty-text">Fill in details then tap analyse</div>
-        <button class="btn-gold" style="margin-top:16px" onclick="runAnalysis()">Run Analysis</button>
+      ${analysisText ? renderAnalysisHTML(analysisText) : `<div class="card" style="text-align:center;padding:48px 20px">
+        <div style="font-size:44px;margin-bottom:16px;opacity:0.3">🔍</div>
+        <div style="font-size:11px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase;margin-bottom:20px">Fill in details across all tabs then analyse</div>
+        <button class="btn-gold" onclick="runAnalysis()">Run AI Analysis</button>
       </div>`}
     </div>
-    ${analysisResult ? `<button class="btn-ghost" onclick="runAnalysis()">Re-analyse</button>` : ''}
+    ${analysisText ? `<button class="btn-ghost" onclick="runAnalysis()">Re-analyse</button>` : ''}
     <button class="btn-ghost" onclick="showPage('offer')">← Edit Deal</button>
   `;
 }
 
-function renderAnalysisText(text) {
+function renderAnalysisHTML(text) {
   const lines = text.split('\n');
-  let html = '<div class="analysis-box">';
+  let h = '<div class="analysis-box">';
   lines.forEach(line => {
-    if (line.startsWith('## ')) {
-      html += `<div class="analysis-section-title">${line.replace('## ','').replace(/[🎯📊💡🗣️⚠️✅🎓]/g,'').trim()}</div>`;
-    } else if (line.startsWith('- ')) {
-      html += `<div class="analysis-bullet">${line.replace('- ','')}</div>`;
-    } else if (/^\d+\./.test(line)) {
-      html += `<div class="analysis-numbered">${line}</div>`;
-    } else if (line.includes('GO') || line.includes('NO GO')) {
+    if (line.startsWith('## ')) h += `<div class="a-section">${line.replace('## ','').replace(/[🎯📊💡🗣️⚠️✅🎓]/g,'').trim()}</div>`;
+    else if (line.startsWith('- ')) h += `<div class="a-bullet">${line.replace('- ','')}</div>`;
+    else if (/^\d+\./.test(line)) h += `<div class="a-num">${line}</div>`;
+    else if (line.match(/\bGO\b|\bNO GO\b/)) {
       const cls = line.includes('NO GO') ? 'verdict-no' : line.includes('CONDITIONAL') ? 'verdict-cond' : 'verdict-go';
-      html += `<div class="${cls}">${line.replace(/\*\*/g,'')}</div>`;
-    } else if (line.trim()) {
-      html += `<div class="analysis-text">${line.replace(/\*\*/g,'')}</div>`;
-    } else {
-      html += '<div style="height:8px"></div>';
-    }
+      h += `<div class="${cls}">${line.replace(/\*\*/g,'')}</div>`;
+    } else if (line.trim()) h += `<div class="a-text">${line.replace(/\*\*/g,'')}</div>`;
+    else h += '<div style="height:6px"></div>';
   });
-  html += '</div>';
-  return html;
+  return h + '</div>';
 }
 
+// ── DEALS PAGE ──
 function renderDeals() {
-  const el = document.getElementById('pageDeals');
-  el.innerHTML = `
-    <div class="section-header">
-      <div class="section-title">My Deals</div>
-      <div class="section-desc">${deals.length} deal${deals.length!==1?'s':''} saved on this device</div>
-    </div>
-    ${deals.length === 0 ? `<div class="empty-state"><div class="empty-icon">📁</div><div class="empty-text">No deals yet — tap + to start</div></div>` :
-    `<div class="card" style="padding:0;overflow:hidden">
-      ${deals.map(d => `
-        <div class="deal-item" onclick="loadDeal(${JSON.stringify(d).replace(/"/g,'&quot;')})">
-          <div>
-            <div class="deal-addr">${d.property.address || 'Untitled Deal'}</div>
-            <div class="deal-meta">${d.property.strategy || '—'} · ${d.stage} · ${d.property.askingPrice ? '£'+parseInt(d.property.askingPrice).toLocaleString('en-GB') : '—'}</div>
-          </div>
-          <button class="deal-del" onclick="deleteDeal(${d.id},event)">×</button>
-        </div>
-      `).join('')}
-    </div>`}
+  document.getElementById('pgDeals').innerHTML = `
+    <div class="pg-title">My Deals</div>
+    <div class="pg-desc">${deals.length} deal${deals.length!==1?'s':''} on this device</div>
+    ${deals.length === 0
+      ? `<div style="text-align:center;padding:60px 20px"><div style="font-size:44px;opacity:0.2;margin-bottom:16px">📁</div><div style="font-size:11px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase">No deals yet</div></div>`
+      : `<div class="card" style="padding:0;overflow:hidden">${deals.map(d => `
+          <div class="deal-row" onclick='loadDeal(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+            <div>
+              <div class="deal-addr">${d.prop?.address || 'Untitled Deal'}</div>
+              <div class="deal-meta">${d.prop?.strategy||'—'} · ${d.stage} · ${d.prop?.askPrice?'£'+parseInt(d.prop.askPrice).toLocaleString('en-GB'):'—'}</div>
+            </div>
+            <button class="deal-del" onclick="deleteDeal(${d.id},event)">×</button>
+          </div>`).join('')}
+        </div>`}
     <button class="btn-gold" onclick="newDeal()">+ New Deal</button>
     <button class="btn-ghost" onclick="showPage('property')">← Back to Current Deal</button>
   `;
 }
 
-// ─── AI ANALYSIS ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+// AI ANALYSIS
+// ═══════════════════════════════════════════════════
 async function runAnalysis() {
   if (!apiKey) { toggleApiModal(); return; }
   showPage('analysis');
-  document.getElementById('analysisContent').innerHTML = `<div class="card" style="text-align:center;padding:48px"><div class="loading-ring"></div><div class="empty-text pulse">Analysing deal...</div></div>`;
+  document.getElementById('analysisContent').innerHTML = `<div class="card" style="text-align:center;padding:56px 20px"><div class="spinner"></div><div style="font-size:11px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase">Analysing deal...</div></div>`;
 
-  const prompt = `You are a UK property investment expert. Analyse this deal clearly and practically.
+  const rtr = isRTR();
+  const prompt = `You are a UK property investment expert specialising in HMO, Supported Exempt Accommodation (SEA), and Rent to Rent strategies. Analyse this deal clearly and give practical guidance.
 
-PROPERTY: ${deal.property.address} | ${deal.property.type} | ${deal.property.bedrooms} bed | £${deal.property.askingPrice} | Strategy: ${deal.property.strategy}
+PROPERTY: ${deal.prop.address} | ${deal.prop.type} | ${deal.prop.beds} bed | Asking: £${deal.prop.askPrice}
+STRATEGY: ${deal.prop.strategy}
 STAGE: ${deal.stage}
-NOTES: ${deal.property.notes}
+NOTES: ${deal.prop.notes}
 
-COSTS: Deposit £${deal.costs.deposit} | Finance £${deal.costs.finance} | Solicitors £${deal.costs.solicitors} | Stamp Duty £${deal.costs.stampDuty} | Fees £${deal.costs.fees} | Contingency £${deal.costs.contingency}
-WORKS TOTAL: £${worksTotal().toFixed(0)}
-TOTAL ALL-IN: £${totalCost().toFixed(0)}
+COSTS (${rtr ? 'Rent to Rent' : 'Acquisition'}):
+${rtr ? `Monthly rent to landlord: £${deal.costs.rent} | Setup costs: £${deal.costs.setup} | Fees: £${deal.costs.fees} | Contingency: £${deal.costs.contingency}` : `Deposit: £${deal.costs.rent} | Finance: £${deal.costs.finance} | Solicitors: £${deal.costs.solicitors} | Fees: £${deal.costs.fees} | Contingency: £${deal.costs.contingency}`}
+Works total: £${worksTotal().toFixed(0)}
+TOTAL ALL-IN: £${totalCosts().toFixed(0)}
 
-PRICED WORKS: ${deal.works.filter(w=>w.rate>0).map(w=>`${w.item} £${(w.qty*w.rate).toFixed(0)}`).join(', ') || 'None yet'}
-
-INCOME: ${deal.offer.rooms ? `${deal.offer.rooms} rooms @ £${deal.offer.weeklyRate}/week` : ''} | Monthly £${monthlyIncome().toFixed(0)} | Annual £${(monthlyIncome()*12).toFixed(0)} | Gross Yield ${grossYield().toFixed(1)}%
-REFINANCE VALUE: £${deal.offer.refinance||0}
+INCOME: ${deal.offer.rooms ? `${deal.offer.rooms} rooms @ £${deal.offer.weeklyRate}/week` : ''} | Monthly: £${monthlyIncome().toFixed(0)} | Annual: £${(monthlyIncome()*12).toFixed(0)} | Gross Yield: ${grossYield().toFixed(1)}%
 
 NEGOTIATION: Desire — "${deal.offer.desire}" | Objection — "${deal.offer.objection}"
 1ST OFFER: A=£${deal.offer.o1a} B=£${deal.offer.o1b} C=£${deal.offer.o1c}
 2ND OFFER: A=£${deal.offer.o2a} B=£${deal.offer.o2b} C=£${deal.offer.o2c}
 
-Provide your analysis using these exact headers:
+${rtr ? `SIIP REFERENCE RATES (Birmingham SEA A): £1,546 per person per 4 weeks, 39% compliance fee, net ~£943/person/4wk. TH model: £1,309/person/4wk, 31% fee, net ~£903. Operational costs: £53.50/tenant/week. Landlord rent: £100/bedroom/week.` : ''}
+
+Please provide your analysis using these exact headers:
 
 ## 🎯 DEAL VERDICT
-GO, CONDITIONAL GO, or NO GO. 2-3 sentences why.
+GO, CONDITIONAL GO, or NO GO. 2-3 sentences.
 
 ## 📊 NUMBERS BREAKDOWN
-Key numbers, monthly cashflow, ROI, anything that stands out.
+Key figures, monthly cashflow, ROI. Flag anything that doesn't stack up.
 
 ## 💡 STRATEGY RECOMMENDATION
-Is this the right strategy? Any better alternatives?
+Right strategy for this property? Any better alternatives?
 
 ## 🗣️ NEGOTIATION COACHING
-Which offer to lead with, what to say, what not to say. Specific to this deal.
+Which offer to lead with. What to say and what NOT to say. Specific to this deal type.
 
 ## ⚠️ RISK FLAGS
 Top 3 risks and how to mitigate them.
 
 ## ✅ NEXT ACTIONS
-Numbered. Specific. In order. What to do next.
+Numbered. Specific. In order.
 
 ## 🎓 KEY LEARNING
 One thing this deal teaches you as an investor.
 
-Be direct and specific to UK property. No generic advice.`;
+Be direct, specific to UK property. No generic advice.`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -746,49 +905,50 @@ Be direct and specific to UK property. No generic advice.`;
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] })
     });
     const data = await res.json();
-    if (data.error) { analysisResult = `Error: ${data.error.message}`; }
-    else { analysisResult = data.content[0].text; saveCurrentDeal(); }
-  } catch(e) { analysisResult = `Connection error: ${e.message}`; }
+    analysisText = data.error ? `Error: ${data.error.message}` : data.content[0].text;
+    if (!data.error) saveDeal();
+  } catch(e) { analysisText = `Connection error: ${e.message}`; }
 
-  document.getElementById('analysisContent').innerHTML = renderAnalysisText(analysisResult);
-  const reBtn = document.querySelector('#pageAnalysis .btn-ghost');
-  if (!reBtn || reBtn.textContent !== 'Re-analyse') {
-    const btn = document.createElement('button');
-    btn.className = 'btn-ghost'; btn.textContent = 'Re-analyse'; btn.onclick = runAnalysis;
-    document.getElementById('pageAnalysis').insertBefore(btn, document.querySelector('#pageAnalysis .btn-ghost'));
-  }
+  document.getElementById('analysisContent').innerHTML = renderAnalysisHTML(analysisText);
 }
 
-// ─── API ──────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+// API MODAL
+// ═══════════════════════════════════════════════════
 function toggleApiModal() {
   const m = document.getElementById('apiModal');
-  m.classList.toggle('hidden');
-  if (!m.classList.contains('hidden')) document.getElementById('apiKeyInput').value = apiKey;
+  m.classList.toggle('hide');
+  if (!m.classList.contains('hide')) document.getElementById('apiIn').value = apiKey;
 }
-function closeApiModal(e) { if (e.target === document.getElementById('apiModal')) toggleApiModal(); }
-function saveApiKey() {
-  apiKey = document.getElementById('apiKeyInput').value.trim();
-  localStorage.setItem('aria_api', apiKey);
+function closeModalBg(e) { if (e.target === document.getElementById('apiModal')) toggleApiModal(); }
+function saveApi() {
+  apiKey = document.getElementById('apiIn').value.trim();
+  localStorage.setItem('aria_key', apiKey);
   document.getElementById('apiDot').style.background = apiKey ? '#3d9e6e' : '#444';
-  toggleApiModal();
-  showToast('API key saved');
+  toggleApiModal(); toast('API key saved');
 }
 
-// ─── TOAST ────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
 let toastTimer;
-function showToast(msg) {
+function toast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.remove('hidden');
+  t.textContent = msg; t.classList.remove('hide');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.add('hidden'), 2000);
+  toastTimer = setTimeout(() => t.classList.add('hide'), 2200);
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   if (apiKey) document.getElementById('apiDot').style.background = '#3d9e6e';
-  renderAll();
-  setTimeout(() => { document.getElementById('splash').classList.add('hidden'); }, 1200);
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  initVoice();
+  renderStages();
+  renderProperty();
+  setTimeout(() => document.getElementById('splash').classList.add('out'), 1400);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 });
 </script>
 </body>
