@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ARIA">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<title>ARIA — Property Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-dim: #8a6f2e;
+    --bg: #080808;
+    --surface: #101010;
+    --surface2: #161616;
+    --border: #1e1e1e;
+    --border2: #2a2a2a;
+    --text: #e8e0d0;
+    --text-dim: #888;
+    --text-muted: #444;
+    --green: #3d9e6e;
+    --red: #9e3d3d;
+    --amber: #c9a84c;
+    --radius: 8px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overscroll-behavior: none;
+  }
+
+  /* SPLASH */
+  #splash {
+    position: fixed; inset: 0; background: var(--bg); z-index: 999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.5s; gap: 16px;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+  .splash-logo { font-family: 'Cormorant Garamond', serif; font-size: 52px; font-weight: 300; color: var(--gold); letter-spacing: 12px; }
+  .splash-sub { font-size: 9px; letter-spacing: 4px; color: var(--text-muted); text-transform: uppercase; }
+  .splash-tagline { font-size: 10px; color: var(--text-muted); letter-spacing: 2px; margin-top: 8px; }
+
+  /* HEADER */
+  #header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(8,8,8,0.95); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px 10px;
+    padding-top: max(12px, env(safe-area-inset-top));
+  }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; }
+  .logo-mark { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--gold); letter-spacing: 6px; }
+  .logo-sub { font-size: 7px; letter-spacing: 3px; color: var(--text-muted); text-transform: uppercase; margin-top: 1px; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--border2);
+    background: var(--surface); color: var(--text-dim); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+    transition: all 0.2s;
+  }
+  .icon-btn:active { transform: scale(0.95); background: var(--surface2); }
+  .api-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+  /* STAGE PILLS */
+  #stage-bar {
+    position: fixed; top: 68px; left: 0; right: 0; z-index: 99;
+    background: rgba(8,8,8,0.9); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px; overflow-x: auto; display: flex; gap: 6px;
+    scrollbar-width: none;
+  }
+  #stage-bar::-webkit-scrollbar { display: none; }
+  .stage-pill {
+    flex-shrink: 0; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border2);
+    background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+  }
+  .stage-pill.active { background: rgba(201,168,76,0.15); border-color: var(--gold); color: var(--gold); }
+
+  /* NAV */
+  #nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(8,8,8,0.97); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding-bottom: max(var(--safe-bottom), 8px);
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 10px 4px 6px; cursor: pointer; transition: all 0.2s; border: none; background: transparent;
+  }
+  .nav-icon { font-size: 20px; line-height: 1; }
+  .nav-label { font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px; color: var(--text-muted); transition: color 0.2s; }
+  .nav-item.active .nav-label { color: var(--gold); }
+  .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px rgba(201,168,76,0.5)); }
+
+  /* CONTENT */
+  #content {
+    padding-top: 120px;
+    padding-bottom: calc(80px + max(var(--safe-bottom), 8px));
+    padding-left: 16px; padding-right: 16px;
+    max-width: 600px; margin: 0 auto;
+  }
+
+  /* SECTION HEADER */
+  .section-header { margin-bottom: 20px; }
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 300; color: var(--text); letter-spacing: 2px; }
+  .section-desc { font-size: 9px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+
+  /* CARDS */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  }
+  .card-title { font-size: 8px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+  /* FORM */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  label { display: block; font-size: 8px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+  input, select, textarea {
+    width: 100%; background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 12px; color: var(--text); font-size: 14px;
+    font-family: 'DM Mono', monospace; outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none; appearance: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold-dim); }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  textarea { resize: none; min-height: 80px; line-height: 1.6; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* STATS BAR */
+  .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 12px; }
+  .stat-cell { background: var(--surface); padding: 12px 8px; text-align: center; }
+  .stat-val { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: var(--gold); display: block; }
+  .stat-val.green { color: var(--green); }
+  .stat-val.red { color: var(--red); }
+  .stat-lab { font-size: 7px; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; display: block; }
+
+  /* WORKS TABLE */
+  .works-header { display: grid; grid-template-columns: 1fr 52px 70px 70px; gap: 6px; padding: 6px 0 8px; border-bottom: 1px solid var(--border2); margin-bottom: 4px; }
+  .works-header span { font-size: 7px; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; }
+  .works-header span:not(:first-child) { text-align: right; }
+  .work-row { display: grid; grid-template-columns: 1fr 52px 70px 70px; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(30,30,30,0.5); }
+  .work-name { font-size: 11px; color: var(--text-dim); line-height: 1.3; }
+  .work-input { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 5px 6px; color: var(--text); font-size: 12px; font-family: 'DM Mono', monospace; text-align: right; width: 100%; -webkit-appearance: none; }
+  .work-total { font-size: 12px; color: var(--gold); text-align: right; }
+  .work-total.zero { color: var(--text-muted); }
+
+  /* PHOTOS */
+  .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .photo-thumb { aspect-ratio: 1; border-radius: 6px; overflow: hidden; position: relative; background: var(--bg); border: 1px solid var(--border2); }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-thumb .del-photo { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); border-radius: 50%; border: none; color: #fff; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+  .photo-add { aspect-ratio: 1; border-radius: 6px; border: 1px dashed var(--border2); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 4px; background: transparent; }
+  .photo-add span { font-size: 22px; }
+  .photo-add small { font-size: 8px; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+  .photo-label-input { font-size: 9px; background: transparent; border: none; border-bottom: 1px solid var(--border); color: var(--text-dim); padding: 2px 0; width: 100%; margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+  /* BUTTONS */
+  .btn-gold {
+    width: 100%; background: var(--gold); color: #0a0a0a; border: none;
+    border-radius: var(--radius); padding: 15px; font-size: 10px; letter-spacing: 3px;
+    text-transform: uppercase; cursor: pointer; font-family: 'DM Mono', monospace;
+    font-weight: 500; transition: all 0.2s; margin-top: 8px;
+  }
+  .btn-gold:active { transform: scale(0.98); opacity: 0.9; }
+  .btn-ghost {
+    width: 100%; background: transparent; color: var(--text-muted); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 13px; font-size: 9px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer; font-family: 'DM Mono', monospace; margin-top: 8px;
+  }
+
+  /* DEALS LIST */
+  .deal-item { padding: 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; display: flex; justify-content: space-between; align-items: center; }
+  .deal-item:active { background: var(--surface2); }
+  .deal-item:last-child { border-bottom: none; }
+  .deal-addr { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+  .deal-meta { font-size: 9px; color: var(--text-muted); letter-spacing: 1px; }
+  .deal-del { background: transparent; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+  .empty-state { text-align: center; padding: 48px 20px; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+  .empty-text { font-size: 10px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+
+  /* ANALYSIS */
+  .analysis-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .analysis-section-title { font-size: 9px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin: 16px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .analysis-section-title:first-child { margin-top: 0; }
+  .analysis-text { font-size: 13px; color: #bbb; line-height: 1.7; margin: 4px 0; }
+  .analysis-bullet { font-size: 12px; color: #aaa; line-height: 1.6; margin: 3px 0; padding-left: 12px; border-left: 2px solid var(--border2); }
+  .analysis-numbered { font-size: 12px; color: #ccc; line-height: 1.6; margin: 3px 0; }
+  .verdict-go { color: var(--green); font-size: 16px; font-weight: 500; }
+  .verdict-cond { color: var(--amber); font-size: 16px; font-weight: 500; }
+  .verdict-no { color: var(--red); font-size: 16px; font-weight: 500; }
+
+  .loading-ring { width: 40px; height: 40px; border: 2px solid var(--border2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* API MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: flex; align-items: flex-end; backdrop-filter: blur(4px); }
+  .modal-overlay.hidden { display: none; }
+  .modal-sheet { background: var(--surface); border-radius: 16px 16px 0 0; border-top: 1px solid var(--border2); padding: 20px; width: 100%; padding-bottom: max(20px, var(--safe-bottom)); }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--text); margin-bottom: 6px; }
+  .modal-desc { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 16px; line-height: 1.6; }
+  .modal-close { float: right; background: transparent; border: none; color: var(--text-muted); font-size: 22px; cursor: pointer; margin-top: -4px; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--surface2); border: 1px solid var(--border2); border-radius: 20px; padding: 8px 16px; font-size: 11px; color: var(--text-dim); letter-spacing: 1px; z-index: 300; transition: opacity 0.3s; white-space: nowrap; }
+  .toast.hidden { opacity: 0; pointer-events: none; }
+
+  /* OFFER SECTION */
+  .offer-label { font-size: 9px; letter-spacing: 1.5px; color: var(--text-muted); text-transform: uppercase; margin: 12px 0 8px; }
+  .offer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .offer-option { text-align: center; }
+  .offer-option label { font-size: 8px; letter-spacing: 1px; color: var(--gold-dim); }
+
+  @media (min-width: 600px) {
+    #content { padding-left: 24px; padding-right: 24px; }
+    .field-row { gap: 16px; }
+  }
+
+  .slide-in { animation: slideIn 0.3s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">ARIA</div>
+  <div class="splash-sub">Automated Real Estate Intelligence Architecture</div>
+  <div class="splash-tagline">Systems Over Manual Action</div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-inner">
+    <div>
+      <div class="logo-mark">ARIA</div>
+      <div class="logo-sub">Property Intelligence</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="showDealsPanel()" title="My Deals">📁</button>
+      <button class="icon-btn" onclick="newDeal()" title="New Deal">＋</button>
+      <button class="icon-btn" onclick="toggleApiModal()" title="API Key">
+        <span class="api-dot" id="apiDot" style="background:#444"></span>⚙
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- STAGE BAR -->
+<div id="stage-bar"></div>
+
+<!-- CONTENT -->
+<div id="content">
+  <div id="pageProperty" class="page slide-in"></div>
+  <div id="pageDeals" class="page slide-in" style="display:none"></div>
+  <div id="pageCosts" class="page slide-in" style="display:none"></div>
+  <div id="pageWorks" class="page slide-in" style="display:none"></div>
+  <div id="pageOffer" class="page slide-in" style="display:none"></div>
+  <div id="pageAnalysis" class="page slide-in" style="display:none"></div>
+</div>
+
+<!-- NAV -->
+<div id="nav">
+  <button class="nav-item active" onclick="showPage('property')" id="nav-property">
+    <span class="nav-icon">🏠</span><span class="nav-label">Property</span>
+  </button>
+  <button class="nav-item" onclick="showPage('costs')" id="nav-costs">
+    <span class="nav-icon">💷</span><span class="nav-label">Costs</span>
+  </button>
+  <button class="nav-item" onclick="showPage('works')" id="nav-works">
+    <span class="nav-icon">🔨</span><span class="nav-label">Works</span>
+  </button>
+  <button class="nav-item" onclick="showPage('offer')" id="nav-offer">
+    <span class="nav-icon">🤝</span><span class="nav-label">Offer</span>
+  </button>
+  <button class="nav-item" onclick="showPage('analysis')" id="nav-analysis">
+    <span class="nav-icon">🔍</span><span class="nav-label">Analyse</span>
+  </button>
+</div>
+
+<!-- API MODAL -->
+<div class="modal-overlay hidden" id="apiModal" onclick="closeApiModal(event)">
+  <div class="modal-sheet">
+    <button class="modal-close" onclick="toggleApiModal()">×</button>
+    <div class="modal-title">API Key</div>
+    <div class="modal-desc">Get your free key at anthropic.com → Console. Paste it below. It stays on your device only — never sent anywhere except Anthropic.</div>
+    <div class="field">
+      <label>Anthropic API Key</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off">
+    </div>
+    <button class="btn-gold" onclick="saveApiKey()">Save Key</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast hidden" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const STAGES = ["Initial Analysis","Viewing Booked","Offer Made","Under Offer","Due Diligence","Exchanged","Completed"];
+const STRATEGIES = ["HMO","SEA / Supported Living","Lease Option","BMV Purchase","Deal Sourcing / Assign","Buy to Let","SA / Serviced Accommodation"];
+const PROP_TYPES = ["Terraced","Semi-Detached","Detached","Flat / Apartment","Bungalow","Commercial Conversion","HMO (existing)"];
+const WORKS_ITEMS = ["Doors & Windows","Joists & Floorboards","Chimney breasts, lintels & structural","Brickwork","Roof, Guttering & Fascias","External walls render","Electrical & rewire – 1st fix","Switches & sockets – 2nd fix","Lighting","HDMI, CAT6, Wifi Points","Fire safety panels & sensors","Emergency lights","Studs, plasterboards & insulation","Cupboards and Boxing ins","Skirting board, Architrave","Internal doors, window sills","Locks & ironmongery","Plumbing & Heating","Kitchen","Bathroom","Tiling","Painting","Flooring","Carpets","Garden and Landscaping"];
+
+let currentPage = 'property';
+let apiKey = localStorage.getItem('aria_api') || '';
+let deals = [];
+let deal = newDealObj();
+let analysisResult = '';
+
+try { deals = JSON.parse(localStorage.getItem('aria_deals') || '[]'); } catch(e) {}
+
+function newDealObj() {
+  return {
+    id: Date.now(),
+    createdAt: new Date().toISOString(),
+    stage: 'Initial Analysis',
+    property: { address:'', type:'', bedrooms:'', askingPrice:'', strategy:'', notes:'' },
+    costs: { deposit:'', finance:'', solicitors:'', estateAgent:'', stampDuty:'', fees:'', contingency:'' },
+    works: WORKS_ITEMS.map(item => ({ item, qty:1, rate:0 })),
+    offer: { rooms:'', weeklyRate:'', monthlyRent:'', refinance:'', desire:'', objection:'', o1a:'', o1b:'', o1c:'', o2a:'', o2b:'', o2c:'', followUp:'' },
+    photos: []
+  };
+}
+
+// ─── COMPUTED ─────────────────────────────────────────────────────────────────
+function worksTotal() { return deal.works.reduce((s,w) => s + (w.qty * w.rate), 0); }
+function costsSubtotal() { return ['deposit','finance','solicitors','estateAgent','stampDuty','fees','contingency'].reduce((s,k) => s + (parseFloat(deal.costs[k])||0), 0); }
+function totalCost() { return costsSubtotal() + worksTotal(); }
+function monthlyIncome() {
+  if (deal.offer.rooms && deal.offer.weeklyRate) return parseFloat(deal.offer.rooms) * parseFloat(deal.offer.weeklyRate) * 52 / 12;
+  return parseFloat(deal.offer.monthlyRent) || 0;
+}
+function grossYield() {
+  const ask = parseFloat(deal.property.askingPrice);
+  if (!ask || !monthlyIncome()) return 0;
+  return (monthlyIncome() * 12 / ask * 100);
+}
+function fmt(n) { return n > 0 ? '£' + Math.round(n).toLocaleString('en-GB') : '—'; }
+
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+function saveCurrentDeal() {
+  deal.updatedAt = new Date().toISOString();
+  const idx = deals.findIndex(d => d.id === deal.id);
+  if (idx >= 0) deals[idx] = deal; else deals.unshift(deal);
+  localStorage.setItem('aria_deals', JSON.stringify(deals));
+  showToast('Deal saved');
+}
+
+function loadDeal(d) {
+  deal = JSON.parse(JSON.stringify(d));
+  analysisResult = '';
+  showPage('property');
+  renderAll();
+}
+
+function newDeal() {
+  deal = newDealObj();
+  analysisResult = '';
+  showPage('property');
+  renderAll();
+}
+
+function deleteDeal(id, e) {
+  e.stopPropagation();
+  if (confirm('Delete this deal?')) {
+    deals = deals.filter(d => d.id !== id);
+    localStorage.setItem('aria_deals', JSON.stringify(deals));
+    if (deal.id === id) newDeal();
+    renderDeals();
+  }
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function showPage(name) {
+  currentPage = name;
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page' + name.charAt(0).toUpperCase() + name.slice(1)).style.display = 'block';
+  const navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  window.scrollTo(0, 0);
+  render(name);
+}
+
+function showDealsPanel() {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('pageDeals').style.display = 'block';
+  renderDeals();
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderAll() { render(currentPage); renderStageBar(); }
+
+function render(name) {
+  renderStageBar();
+  if (name === 'property') renderProperty();
+  else if (name === 'costs') renderCosts();
+  else if (name === 'works') renderWorks();
+  else if (name === 'offer') renderOffer();
+  else if (name === 'analysis') renderAnalysis();
+}
+
+function renderStageBar() {
+  const bar = document.getElementById('stage-bar');
+  bar.innerHTML = STAGES.map(s => `<button class="stage-pill ${deal.stage===s?'active':''}" onclick="setStage('${s}')">${s}</button>`).join('');
+}
+
+function setStage(s) { deal.stage = s; renderStageBar(); }
+
+function renderProperty() {
+  const mi = monthlyIncome(); const gy = grossYield(); const tc = totalCost();
+  document.getElementById('pageProperty').innerHTML = `
+    <div class="section-header">
+      <div class="section-title">Property</div>
+      <div class="section-desc">Enter the property details</div>
+    </div>
+    ${mi > 0 ? `<div class="stats-bar">
+      <div class="stat-cell"><span class="stat-val">${fmt(mi)}</span><span class="stat-lab">Monthly</span></div>
+      <div class="stat-cell"><span class="stat-val">${fmt(tc)}</span><span class="stat-lab">All-In</span></div>
+      <div class="stat-cell"><span class="stat-val ${gy>8?'green':gy>5?'':'red'}">${gy>0?gy.toFixed(1)+'%':'—'}</span><span class="stat-lab">Yield</span></div>
+    </div>` : ''}
+    <div class="card">
+      <div class="card-title">Address & Type</div>
+      <div class="field">
+        <label>Full Address</label>
+        <input type="text" value="${deal.property.address}" oninput="deal.property.address=this.value" placeholder="123 Example St, Derby DE1 2AB" autocomplete="street-address">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Type</label>
+          <select onchange="deal.property.type=this.value">
+            <option value="">Select...</option>
+            ${PROP_TYPES.map(t => `<option ${deal.property.type===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Bedrooms</label>
+          <input type="number" value="${deal.property.bedrooms}" oninput="deal.property.bedrooms=this.value" placeholder="6" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label>Asking Price (£)</label>
+        <input type="number" value="${deal.property.askingPrice}" oninput="deal.property.askingPrice=this.value;renderProperty()" placeholder="250000" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Strategy</label>
+        <select onchange="deal.property.strategy=this.value">
+          <option value="">Select strategy...</option>
+          ${STRATEGIES.map(s => `<option ${deal.property.strategy===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Initial Notes</label>
+        <textarea oninput="deal.property.notes=this.value" placeholder="Vendor situation, condition, what caught your eye...">${deal.property.notes}</textarea>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Property Photos</div>
+      <div id="photoGrid" class="photo-grid"></div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+    </div>
+    <button class="btn-gold" onclick="saveCurrentDeal();showPage('costs')">Save & Continue to Costs →</button>
+  `;
+  renderPhotos();
+}
+
+function renderPhotos() {
+  const grid = document.getElementById('photoGrid');
+  if (!grid) return;
+  let html = (deal.photos||[]).map((p,i) => `
+    <div class="photo-thumb">
+      <img src="${p.data}" alt="${p.label||''}">
+      <button class="del-photo" onclick="deletePhoto(${i})">×</button>
+    </div>
+  `).join('');
+  html += `<div class="photo-add" onclick="document.getElementById('photoInput').click()"><span>📷</span><small>Add Photo</small></div>`;
+  grid.innerHTML = html;
+}
+
+function handlePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    if (!deal.photos) deal.photos = [];
+    deal.photos.push({ data: ev.target.result, label: '', ts: Date.now() });
+    renderPhotos();
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function deletePhoto(idx) { deal.photos.splice(idx, 1); renderPhotos(); }
+
+function renderCosts() {
+  const costs = [['deposit','Deposit'],['finance','Finance / Bridging'],['solicitors','Solicitors'],['estateAgent','Estate Agent'],['stampDuty','Stamp Duty'],['fees','Other Fees'],['contingency','Contingency (10% recommended)']];
+  const sub = costsSubtotal(); const wt = worksTotal(); const tot = sub + wt;
+  document.getElementById('pageCosts').innerHTML = `
+    <div class="section-header">
+      <div class="section-title">Costs</div>
+      <div class="section-desc">All acquisition costs excluding works</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Deal Costs</div>
+      ${costs.map(([k,lab]) => `<div class="field"><label>${lab} (£)</label><input type="number" value="${deal.costs[k]||''}" oninput="deal.costs['${k}']=this.value;renderCosts()" placeholder="0" inputmode="decimal"></div>`).join('')}
+    </div>
+    <div class="stats-bar" style="margin-bottom:12px">
+      <div class="stat-cell"><span class="stat-val">${fmt(sub)}</span><span class="stat-lab">Costs</span></div>
+      <div class="stat-cell"><span class="stat-val">${fmt(wt)}</span><span class="stat-lab">Works</span></div>
+      <div class="stat-cell"><span class="stat-val">${fmt(tot)}</span><span class="stat-lab">Total In</span></div>
+    </div>
+    <button class="btn-ghost" onclick="showPage('property')">← Back</button>
+    <button class="btn-gold" onclick="showPage('works')">Continue to Works →</button>
+  `;
+}
+
+function renderWorks() {
+  const wt = worksTotal();
+  document.getElementById('pageWorks').innerHTML = `
+    <div class="section-header">
+      <div class="section-title">Works Spec</div>
+      <div class="section-desc">Enter your contractor rates</div>
+    </div>
+    <div class="card" style="padding:12px">
+      <div class="works-header">
+        <span>Item</span><span style="text-align:right">Qty</span><span style="text-align:right">Rate £</span><span style="text-align:right">Total</span>
+      </div>
+      ${deal.works.map((w,i) => `
+        <div class="work-row">
+          <div class="work-name">${w.item}</div>
+          <input class="work-input" type="number" value="${w.qty||1}" oninput="deal.works[${i}].qty=parseFloat(this.value)||0;renderWorksTotal()" inputmode="numeric">
+          <input class="work-input" type="number" value="${w.rate||''}" oninput="deal.works[${i}].rate=parseFloat(this.value)||0;renderWorksTotal()" placeholder="0" inputmode="decimal">
+          <div class="work-total ${w.qty*w.rate>0?'':'zero'}" id="wt${i}">${w.qty*w.rate>0?fmt(w.qty*w.rate):'—'}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="stats-bar" style="margin-bottom:12px">
+      <div class="stat-cell" style="grid-column:1/-1"><span class="stat-val">${fmt(wt)}</span><span class="stat-lab">Works Total</span></div>
+    </div>
+    <button class="btn-ghost" onclick="showPage('costs')">← Back</button>
+    <button class="btn-gold" onclick="showPage('offer')">Continue to Offer →</button>
+  `;
+}
+
+function renderWorksTotal() {
+  const wt = worksTotal();
+  deal.works.forEach((w,i) => {
+    const el = document.getElementById('wt'+i);
+    if (el) { el.textContent = w.qty*w.rate>0 ? fmt(w.qty*w.rate) : '—'; el.className = 'work-total '+(w.qty*w.rate>0?'':'zero'); }
+  });
+  const bars = document.querySelectorAll('.stat-val');
+  if (bars.length) bars[bars.length-1].textContent = fmt(wt);
+}
+
+function renderOffer() {
+  document.getElementById('pageOffer').innerHTML = `
+    <div class="section-header">
+      <div class="section-title">Offer</div>
+      <div class="section-desc">Income projections & negotiation strategy</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Income Projection</div>
+      <div class="field-row">
+        <div class="field"><label>Rooms</label><input type="number" value="${deal.offer.rooms}" oninput="deal.offer.rooms=this.value" placeholder="6" inputmode="numeric"></div>
+        <div class="field"><label>Weekly / Room (£)</label><input type="number" value="${deal.offer.weeklyRate}" oninput="deal.offer.weeklyRate=this.value" placeholder="350" inputmode="decimal"></div>
+      </div>
+      <div class="field"><label>Or Total Monthly Rent (£)</label><input type="number" value="${deal.offer.monthlyRent}" oninput="deal.offer.monthlyRent=this.value" placeholder="2500" inputmode="decimal"></div>
+      <div class="field"><label>Refinance / End Value (£)</label><input type="number" value="${deal.offer.refinance}" oninput="deal.offer.refinance=this.value" placeholder="300000" inputmode="decimal"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Negotiation Levers</div>
+      <div class="field"><label>"I really like this but..." (Desire)</label><textarea oninput="deal.offer.desire=this.value" placeholder="I really like this property but the refurb costs are significant...">${deal.offer.desire}</textarea></div>
+      <div class="field"><label>"I really want to do this but..." (Objection)</label><textarea oninput="deal.offer.objection=this.value" placeholder="I really want to do this deal but the numbers only work at...">${deal.offer.objection}</textarea></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Offer Options</div>
+      <div class="offer-label">1st Offer — A (ambitious) · B (target) · C (limit)</div>
+      <div class="offer-grid">
+        ${[['o1a','A'],['o1b','B'],['o1c','C']].map(([k,l]) => `<div class="offer-option"><label>${l}</label><input type="number" value="${deal.offer[k]}" oninput="deal.offer['${k}']=this.value" placeholder="£" inputmode="numeric"></div>`).join('')}
+      </div>
+      <div class="offer-label" style="margin-top:14px">2nd Offer — if rejected</div>
+      <div class="offer-grid">
+        ${[['o2a','A'],['o2b','B'],['o2c','C']].map(([k,l]) => `<div class="offer-option"><label>${l}</label><input type="number" value="${deal.offer[k]}" oninput="deal.offer['${k}']=this.value" placeholder="£" inputmode="numeric"></div>`).join('')}
+      </div>
+      <div class="field" style="margin-top:14px"><label>Follow Up Notes</label><textarea oninput="deal.offer.followUp=this.value" placeholder="Next steps, vendor notes, call dates...">${deal.offer.followUp}</textarea></div>
+    </div>
+    <button class="btn-ghost" onclick="showPage('works')">← Back</button>
+    <button class="btn-gold" onclick="saveCurrentDeal();showPage('analysis');runAnalysis()">🔍 Analyse This Deal with AI</button>
+  `;
+}
+
+function renderAnalysis() {
+  const mi = monthlyIncome(); const gy = grossYield(); const tc = totalCost();
+  const ask = parseFloat(deal.property.askingPrice)||0;
+  document.getElementById('pageAnalysis').innerHTML = `
+    <div class="section-header">
+      <div class="section-title">Analysis</div>
+      <div class="section-desc">${deal.property.address || 'Current deal'}</div>
+    </div>
+    <div class="stats-bar" style="margin-bottom:12px">
+      <div class="stat-cell"><span class="stat-val">${fmt(ask)}</span><span class="stat-lab">Asking</span></div>
+      <div class="stat-cell"><span class="stat-val">${fmt(tc)}</span><span class="stat-lab">All-In</span></div>
+      <div class="stat-cell"><span class="stat-val ${gy>8?'green':gy>5?'':'red'}">${gy>0?gy.toFixed(1)+'%':'—'}</span><span class="stat-lab">Yield</span></div>
+    </div>
+    <div class="stats-bar" style="margin-bottom:12px">
+      <div class="stat-cell"><span class="stat-val">${fmt(mi)}</span><span class="stat-lab">Monthly</span></div>
+      <div class="stat-cell"><span class="stat-val">${fmt(mi*12)}</span><span class="stat-lab">Annual</span></div>
+      <div class="stat-cell"><span class="stat-val">${fmt(worksTotal())}</span><span class="stat-lab">Works</span></div>
+    </div>
+    <div id="analysisContent">
+      ${analysisResult ? renderAnalysisText(analysisResult) : `<div class="card" style="text-align:center;padding:40px">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-text">Fill in details then tap analyse</div>
+        <button class="btn-gold" style="margin-top:16px" onclick="runAnalysis()">Run Analysis</button>
+      </div>`}
+    </div>
+    ${analysisResult ? `<button class="btn-ghost" onclick="runAnalysis()">Re-analyse</button>` : ''}
+    <button class="btn-ghost" onclick="showPage('offer')">← Edit Deal</button>
+  `;
+}
+
+function renderAnalysisText(text) {
+  const lines = text.split('\n');
+  let html = '<div class="analysis-box">';
+  lines.forEach(line => {
+    if (line.startsWith('## ')) {
+      html += `<div class="analysis-section-title">${line.replace('## ','').replace(/[🎯📊💡🗣️⚠️✅🎓]/g,'').trim()}</div>`;
+    } else if (line.startsWith('- ')) {
+      html += `<div class="analysis-bullet">${line.replace('- ','')}</div>`;
+    } else if (/^\d+\./.test(line)) {
+      html += `<div class="analysis-numbered">${line}</div>`;
+    } else if (line.includes('GO') || line.includes('NO GO')) {
+      const cls = line.includes('NO GO') ? 'verdict-no' : line.includes('CONDITIONAL') ? 'verdict-cond' : 'verdict-go';
+      html += `<div class="${cls}">${line.replace(/\*\*/g,'')}</div>`;
+    } else if (line.trim()) {
+      html += `<div class="analysis-text">${line.replace(/\*\*/g,'')}</div>`;
+    } else {
+      html += '<div style="height:8px"></div>';
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderDeals() {
+  const el = document.getElementById('pageDeals');
+  el.innerHTML = `
+    <div class="section-header">
+      <div class="section-title">My Deals</div>
+      <div class="section-desc">${deals.length} deal${deals.length!==1?'s':''} saved on this device</div>
+    </div>
+    ${deals.length === 0 ? `<div class="empty-state"><div class="empty-icon">📁</div><div class="empty-text">No deals yet — tap + to start</div></div>` :
+    `<div class="card" style="padding:0;overflow:hidden">
+      ${deals.map(d => `
+        <div class="deal-item" onclick="loadDeal(${JSON.stringify(d).replace(/"/g,'&quot;')})">
+          <div>
+            <div class="deal-addr">${d.property.address || 'Untitled Deal'}</div>
+            <div class="deal-meta">${d.property.strategy || '—'} · ${d.stage} · ${d.property.askingPrice ? '£'+parseInt(d.property.askingPrice).toLocaleString('en-GB') : '—'}</div>
+          </div>
+          <button class="deal-del" onclick="deleteDeal(${d.id},event)">×</button>
+        </div>
+      `).join('')}
+    </div>`}
+    <button class="btn-gold" onclick="newDeal()">+ New Deal</button>
+    <button class="btn-ghost" onclick="showPage('property')">← Back to Current Deal</button>
+  `;
+}
+
+// ─── AI ANALYSIS ─────────────────────────────────────────────────────────────
+async function runAnalysis() {
+  if (!apiKey) { toggleApiModal(); return; }
+  showPage('analysis');
+  document.getElementById('analysisContent').innerHTML = `<div class="card" style="text-align:center;padding:48px"><div class="loading-ring"></div><div class="empty-text pulse">Analysing deal...</div></div>`;
+
+  const prompt = `You are a UK property investment expert. Analyse this deal clearly and practically.
+
+PROPERTY: ${deal.property.address} | ${deal.property.type} | ${deal.property.bedrooms} bed | £${deal.property.askingPrice} | Strategy: ${deal.property.strategy}
+STAGE: ${deal.stage}
+NOTES: ${deal.property.notes}
+
+COSTS: Deposit £${deal.costs.deposit} | Finance £${deal.costs.finance} | Solicitors £${deal.costs.solicitors} | Stamp Duty £${deal.costs.stampDuty} | Fees £${deal.costs.fees} | Contingency £${deal.costs.contingency}
+WORKS TOTAL: £${worksTotal().toFixed(0)}
+TOTAL ALL-IN: £${totalCost().toFixed(0)}
+
+PRICED WORKS: ${deal.works.filter(w=>w.rate>0).map(w=>`${w.item} £${(w.qty*w.rate).toFixed(0)}`).join(', ') || 'None yet'}
+
+INCOME: ${deal.offer.rooms ? `${deal.offer.rooms} rooms @ £${deal.offer.weeklyRate}/week` : ''} | Monthly £${monthlyIncome().toFixed(0)} | Annual £${(monthlyIncome()*12).toFixed(0)} | Gross Yield ${grossYield().toFixed(1)}%
+REFINANCE VALUE: £${deal.offer.refinance||0}
+
+NEGOTIATION: Desire — "${deal.offer.desire}" | Objection — "${deal.offer.objection}"
+1ST OFFER: A=£${deal.offer.o1a} B=£${deal.offer.o1b} C=£${deal.offer.o1c}
+2ND OFFER: A=£${deal.offer.o2a} B=£${deal.offer.o2b} C=£${deal.offer.o2c}
+
+Provide your analysis using these exact headers:
+
+## 🎯 DEAL VERDICT
+GO, CONDITIONAL GO, or NO GO. 2-3 sentences why.
+
+## 📊 NUMBERS BREAKDOWN
+Key numbers, monthly cashflow, ROI, anything that stands out.
+
+## 💡 STRATEGY RECOMMENDATION
+Is this the right strategy? Any better alternatives?
+
+## 🗣️ NEGOTIATION COACHING
+Which offer to lead with, what to say, what not to say. Specific to this deal.
+
+## ⚠️ RISK FLAGS
+Top 3 risks and how to mitigate them.
+
+## ✅ NEXT ACTIONS
+Numbered. Specific. In order. What to do next.
+
+## 🎓 KEY LEARNING
+One thing this deal teaches you as an investor.
+
+Be direct and specific to UK property. No generic advice.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: [{ role: 'user', content: prompt }] })
+    });
+    const data = await res.json();
+    if (data.error) { analysisResult = `Error: ${data.error.message}`; }
+    else { analysisResult = data.content[0].text; saveCurrentDeal(); }
+  } catch(e) { analysisResult = `Connection error: ${e.message}`; }
+
+  document.getElementById('analysisContent').innerHTML = renderAnalysisText(analysisResult);
+  const reBtn = document.querySelector('#pageAnalysis .btn-ghost');
+  if (!reBtn || reBtn.textContent !== 'Re-analyse') {
+    const btn = document.createElement('button');
+    btn.className = 'btn-ghost'; btn.textContent = 'Re-analyse'; btn.onclick = runAnalysis;
+    document.getElementById('pageAnalysis').insertBefore(btn, document.querySelector('#pageAnalysis .btn-ghost'));
+  }
+}
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+function toggleApiModal() {
+  const m = document.getElementById('apiModal');
+  m.classList.toggle('hidden');
+  if (!m.classList.contains('hidden')) document.getElementById('apiKeyInput').value = apiKey;
+}
+function closeApiModal(e) { if (e.target === document.getElementById('apiModal')) toggleApiModal(); }
+function saveApiKey() {
+  apiKey = document.getElementById('apiKeyInput').value.trim();
+  localStorage.setItem('aria_api', apiKey);
+  document.getElementById('apiDot').style.background = apiKey ? '#3d9e6e' : '#444';
+  toggleApiModal();
+  showToast('API key saved');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 2000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (apiKey) document.getElementById('apiDot').style.background = '#3d9e6e';
+  renderAll();
+  setTimeout(() => { document.getElementById('splash').classList.add('hidden'); }, 1200);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+});
+</script>
+</body>
+</html>
